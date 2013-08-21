@@ -1,0 +1,13 @@
+---
+pageable: true
+per_page: 11
+---
+
+- wrap_layout :layout do
+  %article{"style"=>"display: block"}
+    %header
+      %h1
+        = current_article.title
+        %time= current_article.date.strftime('%e. %_m. %Y')
+    = yield
+    %footer

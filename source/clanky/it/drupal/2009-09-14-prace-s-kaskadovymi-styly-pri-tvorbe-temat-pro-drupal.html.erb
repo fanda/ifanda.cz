@@ -1,0 +1,109 @@
+---
+title: Práce s kaskádovými styly při tvorbě témat pro Drupal
+date: 2009-09-14 20:37
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: true
+---
+<p>Téměř každá webová stránka dnes používá kaskádové styly (CSS) pro určení svého vzhledu. Tradičně se CSS soubory vkládají do statických HTML dokumentů tagem <em>link</em> umístěným v hlavičce stránky.<br>
+Například:<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">&lt;link href="./style.css" rel="stylesheet" type="text/css"  /&gt;</pre></div>
+<br>
+Díky tomuto kódu prohlížeč ví, že má pro řízení vzhledu stránky použít soubor <em>style.css</em>.
+<p>Také Drupal tímto způsoben oznamuje, jaké soubory vedou k určení vzhledu stránky. Je tu ale jeden rozdíl, a tím je, že Drupal do hlavičky vkládá kaskádové styly automaticky. V Drupalu totiž neexistuje jeden kaskádový styl pro všechno, nýbrž každé téma vzhledu nebo dokonce modul může mít svůj vlastní. Navíc Drupal tvůrci vzhledu nabízí hned několik možností, jak vkládat nové nebo přepisovat staré kaskádové styly a určit tak, jak bude výsledný web vypadat.</p>
+<h2>Vkládání kaskádových stylů pomocí souboru .info</h2>
+<p>Vytváříme-li nové téma vzhledu pro Drupal, jsou kaskádové styly první a nejdůležitější věcí, která nás zajímá. Základní styl tématu vzhledu je dobré definovat v <em>souboru .info</em> našeho tématu.</p>
+<p>Pokud v <em>souboru .info</em> nenastavíme nic, použije se jako výchozí soubor <em>style.css</em>. Chceme-li používat jiný soubor pro všechny druhy médii, stačí do <em>souboru .info</em> vložit řádek se jménem souboru kaskádového stylu následujícím způsobem.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">stylesheets[all][] = css/mujStyl.css</pre></div>
+<br>
+Cheme-li definovat styl jen pro určitá média, jednoduše napíšeme pro jaká. Každý nový záznam o souboru je na novém řádku.<br>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">stylesheets[screen,projector][] = css/mujScreenProjektorStyl.css</pre></div>
+<br>
+nebo<br>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">stylesheets[print][] = mujStylProTisk.css</pre></div>
+<br>
+<strong><br>
+Ovšem pozor. Je potřeba mít na paměti, že pokud změníme <em>soubor .info</em>, musí se vyčistit interní pamět Drupalu (cache) na stránce Výkon (Administrace → Nastavení webu → Výkon). </strong>
+<p>Při vytváření tématu vzhledu je také nutné vypnout všechny druhy CSS optimalizace, kterou Drupal nabízí tamtéž.</p>
+<h2>Vkládání stylů skrz funkce z Drupal API</h2>
+<p>Většinou je vložení stylu pomocí <em>souboru .info</em> naprosto dostačující, ale protože je <em>soubor .info</em> statický, vzniká zde potřeba vkládat kaskádové styly také dynamicky, tedy jen za určitých podmínek.</p>
+<p>V Drupalu pro to existují hned dvě funkce, <a href="http://api.drupal.org/api/function/drupal_add_css/6" title="Reference k funkci">drupal_add_css</a> a <a href="http://api.drupal.org/api/function/drupal_get_css/6" title="Reference k funkci">drupal_get_css</a>. První zmíněná funkce přidá CSS soubor do řady k ostatním, kde bude čekat než se všechny společně spracují a  vypíší na své místo do tagu <em>head</em>, což udělá druhá funkce, která vrací řetězec tagů <em>link</em> ukazujících na jednotlivé CSS soubory. </p>
+<p>Následující kód vloží kaskádový styl front-page.css vždy na úvodní stránku a nebo, není-li stránka úvodní, vloží styl pojmenovaný podle aktuální adresy stránky. Například na stránku <a href="http://example.com/admin" title="http://example.com/admin">http://example.com/admin</a> vloží kaskádový styl „path-admin.css“.<br>
+</p>
+<div class="geshifilter"><pre class="php geshifilter-php" style="font-family:monospace;"><span class="kw2">&lt;?php</span>
+<span class="co2"># nahradte hook jmenem tematu vzhledu
+</span><span class="kw2">function</span> hook_preprocess_page<span class="br0">(</span><span class="sy0">&amp;</span><span class="re0">$variables</span><span class="br0">)</span> <span class="br0">{</span>
+  <span class="re0">$front_style</span> <span class="sy0">=</span> path_to_theme<span class="br0">(</span><span class="br0">)</span> <span class="sy0">.</span><span class="st_h">'/front-page.css'</span><span class="sy0">;</span>
+  <span class="re0">$path_style</span> <span class="sy0">=</span> path_to_theme<span class="br0">(</span><span class="br0">)</span> <span class="sy0">.</span><span class="st_h">'/path-'</span><span class="sy0">.</span> arg<span class="br0">(</span><span class="nu0">0</span><span class="br0">)</span> <span class="sy0">.</span><span class="st_h">'.css'</span><span class="sy0">;</span>
+ 
+  <span class="kw1">if</span> <span class="br0">(</span><a href="http://www.php.net/file_exists"><span class="kw3">file_exists</span></a><span class="br0">(</span><span class="re0">$front_style</span><span class="br0">)</span> <span class="sy0">&amp;&amp;</span> <span class="re0">$variables</span><span class="br0">[</span><span class="st_h">'is_front'</span><span class="br0">]</span><span class="br0">)</span> <span class="br0">{</span>
+    <span class="re0">$include_style</span> <span class="sy0">=</span> <span class="re0">$front_style</span><span class="sy0">;</span>
+  <span class="br0">}</span>
+  <span class="kw1">elseif</span> <span class="br0">(</span><a href="http://www.php.net/file_exists"><span class="kw3">file_exists</span></a><span class="br0">(</span><span class="re0">$path_style</span><span class="br0">)</span><span class="br0">)</span> <span class="br0">{</span>
+    <span class="re0">$include_style</span> <span class="sy0">=</span> <span class="re0">$path_style</span><span class="sy0">;</span>
+  <span class="br0">}</span>
+ 
+  <span class="kw1">if</span> <span class="br0">(</span><a href="http://www.php.net/isset"><span class="kw3">isset</span></a><span class="br0">(</span><span class="re0">$include_style</span><span class="br0">)</span><span class="br0">)</span> <span class="br0">{</span>
+    drupal_add_css<span class="br0">(</span><span class="re0">$include_style</span><span class="sy0">,</span> <span class="st_h">'theme'</span><span class="sy0">,</span> <span class="st_h">'all'</span><span class="sy0">,</span> <span class="kw4">FALSE</span><span class="br0">)</span><span class="sy0">;</span>
+    <span class="re0">$variables</span><span class="br0">[</span><span class="st_h">'styles'</span><span class="br0">]</span> <span class="sy0">=</span> drupal_get_css<span class="br0">(</span><span class="br0">)</span><span class="sy0">;</span>
+  <span class="br0">}</span>
+<span class="br0">}</span>
+<span class="sy1">?&gt;</span></pre></div>
+<br>
+Tento kód se vkládá do souboru <em>template.php</em>. Vkládaná funkce hook_preprocess_page() tam již může být vytvořena. V takovém případě do ní vložte jen tělo uvedeného kódu.
+<p>Funkce <a href="http://api.drupal.org/api/function/drupal_add_css/6" title="Reference k funkci">drupal_add_css</a> má parametr, jenž nastavuje, zda se má CSS soubor spojit s ostatními soubory do jednoho velkého CSS souboru. Pokud se takovým způsobem dynamicky spojuje více větších souborů, může to značně zpomalit načítání stránek. Zvažte používání tohoto parametru!</p>
+<h2>Přepisování stylů modulů</h2>
+<p>Každý modul, ať už dodatečný nebo modul jádra, může ovládat vzhled svého výstupu pomocí kaskádových stylů. Aby se tvůrci témat vzhledu nemuseli starat o vizuální stránku všech modulů, mají všechny moduly svůj výchozí styl, který může být podle uvážení tvůrce tématu změněn, podobně jako se mění chování funkcí uvnitř šablon. Všechny provedené zásahy do výchozích stylů by měly být umístěny ve složce s tématem vzhledu.</p>
+<p>Přepsání CSS souboru konkrétního modulu je tak jednoduché, jako redefinování jména souboru uvnitř <em>souboru .info</em>. Jako příklad vezměme kaskádový styl system-menus.css, původně umístěný ve složce „/modules/system“. Následující řádek <em>souboru .info</em> zařídí, že se původní soubor bude ignorovat a že se použije soubor umístěný ve složce s tématem vzhledu.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">stylesheets[all][] = system-menus.css</pre></div>
+<br>
+<strong>Mělo by být zaručeno, že zmíněný CSS soubor opravdu existuje a že je definován pro stejný typ média jako původní soubor, protože jinak se pro výstup modulu nepoužije žádný styl.</strong>
+<ul>Pozor také na:
+<li> cesty uvnitř kaskádového stylu při používání CSS pravidel url() a @import. </li>
+<li>změnu pořadí jednolivých stylů v hlavičce stránky</li>
+<li>dynamickou změnu CSS souborů</li>
+</ul>
+<h2>Standardní názvosloví kaskádových stylů v Drupalu</h2>
+<p>Většina témat vzhledu používá stejné názvy CSS tříd pro nejběžnější prvky stránky. Tady je u jejich názvu i krátký popis.</p>
+<h3>Prvky stránky</h3>
+<p><strong>.menu</strong><br>
+	Pro všechny stromy nabídek, jako třeba navigační menu<br>
+<strong>.block</strong><br>
+	pro jednotlivé bloky<br>
+<strong>.links</strong><br>
+	Odrážky s odkazy, tedy například primární a sekundární odkazy nebo termíny kategorií</p>
+<h3>Prvky uzlu</h3>
+<p><strong>.node</strong><br>
+	Obal (wrapper) všech uzlů, včetně titulku<br>
+<strong>.node-title</strong><br>
+	nadpis uzlu<br>
+<strong>.content</strong><br>
+	tělo uzlu, ale i třeba bloku<br>
+<strong>.inline</strong><br>
+	mění vzhled prvků UL tagu do vodorovného zobrazení<br>
+<strong>.feed-icon</strong><br>
+	styl RSS feed ikony, obvykle je umístěná v patičce stránky</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://drupal.org/theme-guide/6">Drupal 6 theme guide (anglicky)</a>        </div>
+        </div>
+</div>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/anatomie-temat-vzhledu-pro-drupal-6">Anatomie témat vzhledu pro Drupal 6</a>        </div>
+              <div class="field-item even">
+                    <a href="http://ifanda.cz/clanky/drupal/vytvareni-nastaveni-themes-soubor-info">Vytváření a nastavení themes, soubor .info</a>        </div>
+        </div>
+</div>
+</fieldset>
+

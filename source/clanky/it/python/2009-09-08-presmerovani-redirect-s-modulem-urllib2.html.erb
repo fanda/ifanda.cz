@@ -1,0 +1,73 @@
+---
+title: Přesměrování (redirect) s modulem urllib2
+date: 2009-09-08 20:03
+layout: article
+comments: false
+tags: [it, python]
+geshifilter: true
+---
+<p>Standardně je Pythonovský modul <em>urllib2</em> naprogramován tak, že automaticky zajistí, aby se HTTP přesměrování provedlo, aniž by o tom uživatel (nebo spíše programátor) věděl. Někdy je ovšem dobré vědět, že bylo přesměrování provedeno a jaký je jeho typ. Například v případě, že potřebujete uložit novou URL stránky, protože ta se díky přesměrování změní. Při zjišťování přesměrování mohou ale nastat nečekané problémy.</p>
+SPLIT
+<h2>Typy HTTP přesměrování</h2>
+<p>Nejdříve si něco řekněme o přesměrování samotném. Určitě se Vám někdy stalo, že jste zadali adresu do prohlížeče a po načtení webové stránky se ta adresa změnila. To je přesměrování. Jednoduché že?</p>
+<p>Ne tak docela. Přestože to většinou nikoho nezajímá, existuje více typů přesměrování. Odlišeny jsou od sebe svým kódem (číslem), které Váš internetový prohlížeč dostane v HTTP hlavičce. U přesměrování se jedná o čísla 300 až 307, já se ovšem budu dále zabývat jen dvěmi z nich a to <strong>301 - Moved Permanently (Trvale přesunuto)</strong> a <strong>302 - Moved Temporarily (Dočasně přesunuto, někdy bývá uvedeno Found - Nalezeno)</strong>. Rozdíl mezi trvalým a dočasným přesměrováním snad netřeba vysvětlovat :)</p>
+<h2>Rozlišení přesměrování v Pythonu</h2>
+<p>Teď už se snad dostanu k jádru pudla. V Pythonu při zjišťování stavového kódu přesměrování vznikne výjimka, která program shodí. Vyzkoušejte následující příkazy a uvidíte.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="sy0">&gt;&gt;&gt;</span> <span class="kw1">import</span> <span class="kw3">urllib2</span>, <span class="kw3">httplib</span>
+<span class="sy0">&gt;&gt;&gt;</span> <span class="kw3">httplib</span>.<span class="me1">HTTPConnection</span>.<span class="me1">debuglevel</span> = <span class="nu0">1</span>
+<span class="sy0">&gt;&gt;&gt;</span> request = <span class="kw3">urllib2</span>.<span class="me1">Request</span><span class="br0">(</span>
+...         <span class="st0">'http://www.mpower-project.eu'</span><span class="br0">)</span> <span class="co1"># URL s přeměrováním</span>
+<span class="sy0">&gt;&gt;&gt;</span> opener = <span class="kw3">urllib2</span>.<span class="me1">build_opener</span><span class="br0">(</span><span class="br0">)</span>
+<span class="sy0">&gt;&gt;&gt;</span> f = opener.<span class="kw2">open</span><span class="br0">(</span>request<span class="br0">)</span></pre></div>
+<br>
+Zatím nic. Ovšem jen do doby, kdy si nechám vypsat URL stránky v paměti.<br>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="sy0">&gt;&gt;&gt;</span> f.<span class="me1">url</span>
+<span class="st0">'http://www.sintef.no/Projectweb/MPOWER/'</span></pre></div>
+<br>
+Je jiná než jsem zadal. Ovšem bylo přesměrovnání dočasné nebo trvalé? Nevím.<br>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="sy0">&gt;&gt;&gt;</span> f.<span class="me1">status</span>
+Traceback <span class="br0">(</span>most recent call last<span class="br0">)</span>:
+  File <span class="st0">"&lt;stdin&gt;"</span>, line <span class="nu0">1</span>, <span class="kw1">in</span> <span class="sy0">?</span>
+<span class="kw2">AttributeError</span>: addinfourl instance has no attribute <span class="st0">'status'</span></pre></div>
+<br>
+Chytré hlavy ale vědí, jak to vyřešit. Stačí se podívat, jak funguje urllib2 a napsat si svůj redirect handler, pro tyto dva stavové kódy. Následující kód se může vyťukat do terminálu nebo uložit do samostatného souboru.<br>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">class</span> SmartRedirectHandler<span class="br0">(</span><span class="kw3">urllib2</span>.<span class="me1">HTTPRedirectHandler</span><span class="br0">)</span>:
+    <span class="kw1">def</span> http_error_301<span class="br0">(</span><span class="kw2">self</span>, req, fp, <span class="kw3">code</span>, msg, headers<span class="br0">)</span>:
+        result = <span class="kw3">urllib2</span>.<span class="me1">HTTPRedirectHandler</span>.<span class="me1">http_error_301</span><span class="br0">(</span>
+            <span class="kw2">self</span>, req, fp, <span class="kw3">code</span>, msg, headers<span class="br0">)</span>
+        result.<span class="me1">status</span> = <span class="kw3">code</span>
+        <span class="kw1">return</span> result
+ 
+    <span class="kw1">def</span> http_error_302<span class="br0">(</span><span class="kw2">self</span>, req, fp, <span class="kw3">code</span>, msg, headers<span class="br0">)</span>:
+        result = <span class="kw3">urllib2</span>.<span class="me1">HTTPRedirectHandler</span>.<span class="me1">http_error_302</span><span class="br0">(</span>
+            <span class="kw2">self</span>, req, fp, <span class="kw3">code</span>, msg, headers<span class="br0">)</span>
+        result.<span class="me1">status</span> = <span class="kw3">code</span>
+        <span class="kw1">return</span> result   </pre></div>
+<br>
+Nyní stačí malinko upravit původní kód a mám HTTP status z hlavičky jak na dlani, což potřebuji. Předpokládejme, že následující kód už třídu SmartRedirectHandler zná.<br>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="sy0">&gt;&gt;&gt;</span> <span class="kw1">import</span> <span class="kw3">urllib2</span>, <span class="kw3">httplib</span>
+<span class="sy0">&gt;&gt;&gt;</span> <span class="kw3">httplib</span>.<span class="me1">HTTPConnection</span>.<span class="me1">debuglevel</span> = <span class="nu0">1</span>
+<span class="sy0">&gt;&gt;&gt;</span> request = <span class="kw3">urllib2</span>.<span class="me1">Request</span><span class="br0">(</span>
+...         <span class="st0">'http://www.mpower-project.eu'</span><span class="br0">)</span> <span class="co1"># URL s přeměrováním</span>
+<span class="sy0">&gt;&gt;&gt;</span> opener = <span class="kw3">urllib2</span>.<span class="me1">build_opener</span><span class="br0">(</span>
+...         <span class="me1">SmartRedirectHandler</span><span class="br0">(</span><span class="br0">)</span><span class="br0">)</span>
+<span class="sy0">&gt;&gt;&gt;</span> f = opener.<span class="kw2">open</span><span class="br0">(</span>request<span class="br0">)</span>
+<span class="sy0">&gt;&gt;&gt;</span> f.<span class="me1">url</span>
+<span class="st0">'http://www.sintef.no/Projectweb/MPOWER/'</span>
+<span class="sy0">&gt;&gt;&gt;</span> f.<span class="me1">status</span>
+<span class="nu0">301</span></pre></div>
+<br>
+Bingo. Teď už mé programy umí rozlišovat dočasná a trvalá přesměrování.
+<p>Ale nemyslete si, že já jsem ta chytrá hlava, která na to došla. Musel jsem trochu zagooglit, abych našel hezkou stránku, kde bylo řešení uvedeno ;) Vy tu stránku můžete najít v odkazech pod článkem.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://diveintopython.org/http_web_services/redirects.html">Zdroj řešení</a>        </div>
+        </div>
+</div>
+</fieldset>
+

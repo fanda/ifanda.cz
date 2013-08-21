@@ -1,0 +1,145 @@
+---
+title: Řadící algoritmy v Ruby
+date: 2010-01-17 23:14
+layout: article
+comments: false
+tags: [it, ruby]
+geshifilter: true
+---
+<p>Jako přípravu ke zkoušce z kurzu Algoritmy jsem v Ruby implementoval čtyři řadící algoritmy. Ruby jsem pro selectsort, insertsort, heapsort a quicksort zvolil, protože se v něm potřebuju trochu procvičit a taky mi to přišlo docela zajímavé. Ke každému algoritmu se sluší napsat, jaké má vlastnosti, takže článek je spíše studijní než v praxi použitelný.</p>
+SPLIT
+<p>Všechny algoritmy jsou psány pro řazení pole čísel typu integer, které je definováno jako globální. Při své implementaci jsem používal pole definované takto:<br>
+</p>
+<div class="geshifilter"><pre class="ruby geshifilter-ruby" style="font-family:monospace;"><span class="re0">$A</span> = <span class="br0">[</span><span class="nu0">2</span>, <span class="nu0">5</span>, <span class="nu0">7</span>, <span class="nu0">9</span>, <span class="nu0">1</span>, <span class="nu0">3</span>, <span class="nu0">4</span>, <span class="nu0">6</span>, <span class="nu0">8</span>, <span class="nu0">0</span>, <span class="nu0">1</span><span class="br0">]</span></pre></div>
+<br>
+<em>(Znak $ v názvu proměnné označuje v jazyce Ruby globální proměnné.)</em>
+<h2>Selectsort</h2>
+<p>Selectsort je algoritmus pracující na principu výběru. Sestává ze dvou cyklů. První cyklus prochází vždy jen neseřazenou část pole. Jinak řečeno začíná nad celým polem o velikosti N, ale každý nový i-tý průchod, kde i = 1..N, prochází vždy o jednu položku méně, tedy vždy N - i položek. Druhý vnořený cyklus hledá ve stále se zmenšující neseřazené části nejmenší hodnotu. Po dokončení druhého cyklu se nejmenší hodnota vymění s i-tou hodnotou cyklu prvního.</p>
+<p><strong>Složitost:</strong> kvadratická, O(N<sup>2</sup>)<br>
+<strong>Stabilita:</strong> nestabilní<br>
+<strong>Přirozenost:</strong> nepřirozená</p>
+<p><strong>Výhody:</strong> snadná implementace<br>
+<strong>Nevýhody:</strong> nízká rychlost</p>
+<p></p>
+<div class="geshifilter"><pre class="ruby geshifilter-ruby" style="font-family:monospace;"><span class="kw1">def</span> selectSort
+   <span class="re0">$A</span>.<span class="me1">each_index</span> <span class="kw1">do</span> <span class="sy0">|</span>i<span class="sy0">|</span>
+      min = i
+      <span class="co1"># hledání minima možno nahradit $A.min</span>
+      <span class="kw1">for</span> x <span class="kw1">in</span> i...$A.<span class="me1">length</span>
+         min = x <span class="kw1">if</span> <span class="re0">$A</span><span class="br0">[</span>min<span class="br0">]</span> <span class="sy0">&gt;</span> <span class="re0">$A</span><span class="br0">[</span>x<span class="br0">]</span>
+      <span class="kw1">end</span>
+      <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span>, <span class="re0">$A</span><span class="br0">[</span>min<span class="br0">]</span> = <span class="re0">$A</span><span class="br0">[</span>min<span class="br0">]</span>, <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span>
+   <span class="kw1">end</span>
+<span class="kw1">end</span></pre></div>
+<h2>Insertsort</h2>
+<p>Insertsort je metoda jednoduchá metoda, která vkládá jednotlivé prvky přímo na své místo. Pole je rozděleno na dvě části - seřazenou část a neseřazenou část - tak, že na začátku je seřazená část tvořena jedním (prvním) prvkem. Algoritmus vyjme první prvek v neseřazené části, takže se jeho místo uvolní. Pokud je vyjmutý prvek větší než největší seřazený prvek, vrátí jej zpět. V opačném případě se největší seřazený prvek posune na uvolněné místo, čímž vznikne volný prostor na jeho původní pozici a vyjmutý prvek se může stejným způsobem porovnat s jeho menším následovníkem. Je-li vyjmutý prvek nejmenší, dojde takto až na začátek pole.</p>
+<p><strong>Složitost:</strong> kvadratická, O(N<sup>2</sup>)<br>
+<strong>Stabilita:</strong> stabilní<br>
+<strong>Přirozenost:</strong> přirozená</p>
+<p><strong>Výhody:</strong> snadná implementace, v nejlepším případě je jeho složitost lineární<br>
+<strong>Nevýhody:</strong> obecně pomalejší algoritmus</p>
+<p></p>
+<div class="geshifilter"><pre class="ruby geshifilter-ruby" style="font-family:monospace;"><span class="kw1">def</span> insertSort
+   <span class="kw1">for</span> i <span class="kw1">in</span> 1...$A.<span class="me1">length</span>
+      value = <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span> <span class="co1"># hodnota prvního neseřazeného prvku</span>
+      j = i <span class="sy0">-</span> <span class="nu0">1</span> <span class="co1"># index největšího seřazeného prvku</span>
+      <span class="kw1">while</span> <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> <span class="sy0">&gt;</span> value <span class="kw1">and</span> j <span class="sy0">&gt;</span>= <span class="nu0">0</span>
+         <span class="re0">$A</span><span class="br0">[</span>j <span class="sy0">+</span> <span class="nu0">1</span><span class="br0">]</span> = <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> <span class="co1"># posun na volné místo</span>
+         j <span class="sy0">+</span>= <span class="nu0">1</span>
+      <span class="kw1">end</span>
+      <span class="re0">$A</span><span class="br0">[</span>j <span class="sy0">+</span> <span class="nu0">1</span><span class="br0">]</span> = value <span class="co1"># insert</span>
+   <span class="kw1">end</span>
+   <span class="re0">$A</span>
+<span class="kw1">end</span></pre></div>
+<h2>Heapsort</h2>
+<p>Řazení hromadou je velmi elegantní a pokročilý řadící algoritmus. Pole je nejdříve přeměněno na stromovou strukturu zvanou hromada (halda), která má tu vlastnost, že její vrchol (první prvek) je největší ze všech prvků. Výměnou vrcholu hromady s posledním prvkem pole hromadu sice porušíme, ale efektivně tak řadíme od konce největší prvky, dokud nemá zmenšující se hromada velikost jednoho prvku, nejmenšího v poli. Porušenou hromadu musíme vždy opravit ("zatřepat s ní"), což je provedeno funkcí <em>sift</em>.</p>
+<p><strong>Složitost:</strong> lineárně logaritmická, O(N * log<sub>2</sub>N)<br>
+<strong>Stabilita:</strong> nestabilní<br>
+<strong>Přirozenost:</strong> nepřirozená</p>
+<p><strong>Výhody:</strong> vždy lineárně logaritmická složitost<br>
+<strong>Nevýhody:</strong> nestabilní</p>
+<p></p>
+<div class="geshifilter"><pre class="ruby geshifilter-ruby" style="font-family:monospace;"><span class="kw1">def</span> sift<span class="br0">(</span>root, length<span class="br0">)</span>
+   i = root <span class="co1"># kořen</span>
+   j = <span class="nu0">2</span> <span class="sy0">*</span> i <span class="co1"># levý syn</span>
+   value = <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span> <span class="co1"># hodnota kořene</span>
+   <span class="kw1">while</span> j <span class="sy0">&lt;</span>= length
+      <span class="kw1">if</span> j <span class="sy0">&lt;</span>  length <span class="co1"># uzel má oba syny</span>
+         <span class="co1"># výběr většího syna</span>
+         j <span class="sy0">+</span>= <span class="nu0">1</span> <span class="kw1">if</span> <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> <span class="sy0">&lt;</span> <span class="re0">$A</span><span class="br0">[</span>j <span class="sy0">+</span> <span class="nu0">1</span><span class="br0">]</span>
+      <span class="kw1">end</span>
+      <span class="kw1">if</span> <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> <span class="sy0">&lt;</span> value
+         <span class="kw1">break</span> <span class="co1"># kořen je větší, hotovo</span>
+      <span class="kw1">else</span>
+         <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span> = <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> <span class="co1"># syn stoupá výš</span>
+         i = j <span class="co1"># syn se stává příštím otcem</span>
+         j = <span class="nu0">2</span> <span class="sy0">*</span> i
+      <span class="kw1">end</span>
+   <span class="kw1">end</span>
+   <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span> = value <span class="co1"># uložení původního uzlu</span>
+<span class="kw1">end</span>
+ 
+<span class="kw1">def</span> heapSort
+   <span class="re0">$A</span>.<span class="me1">insert</span><span class="br0">(</span><span class="nu0">0</span>,<span class="nu0">0</span><span class="br0">)</span> <span class="co1"># vyplnění nultého prvku kvůli indexům</span>
+   last = <span class="re0">$A</span>.<span class="me1">length</span> <span class="sy0">-</span> <span class="nu0">1</span>
+   <span class="br0">(</span>last <span class="sy0">/</span> <span class="nu0">2</span><span class="br0">)</span>.<span class="me1">downto</span> <span class="nu0">1</span> <span class="kw1">do</span> <span class="sy0">|</span>l<span class="sy0">|</span> <span class="co1"># vytvoření hromady</span>
+      sift<span class="br0">(</span>l, last<span class="br0">)</span>
+   <span class="kw1">end</span>
+   last.<span class="me1">downto</span> <span class="nu0">2</span> <span class="kw1">do</span> <span class="sy0">|</span>l<span class="sy0">|</span> <span class="co1"># řazení hromadou</span>
+      <span class="re0">$A</span><span class="br0">[</span><span class="nu0">1</span><span class="br0">]</span>, <span class="re0">$A</span><span class="br0">[</span>l<span class="br0">]</span> = <span class="re0">$A</span><span class="br0">[</span>l<span class="br0">]</span>, <span class="re0">$A</span><span class="br0">[</span><span class="nu0">1</span><span class="br0">]</span> <span class="co1"># vyjmutí největšího</span>
+      sift<span class="br0">(</span><span class="nu0">1</span>, l <span class="sy0">-</span> <span class="nu0">1</span><span class="br0">)</span>
+   <span class="kw1">end</span>
+   <span class="re0">$A</span>.<span class="me1">shift</span> <span class="co1"># smazání nultého prvku</span>
+   <span class="re0">$A</span>
+<span class="kw1">end</span></pre></div>
+<h2>Quicksort</h2>
+<p>Obecně nejrychlejší řadící metoda, která je založena na principu rozdělení. Pole je rozděleno na dvě části prvkem zvaným <em>pivot</em> a poté jsou prvky uspořádány tak, že nalevo od něj jsou prvky menší (než tento <em>pivot</em>) a napravo prvky větší. Tyto části jsou znovu rekurzivně děleny a řazeny na stále menší, až dokud je co dělit. Poté je pole seřazeno. Rychlost algoritmu je ovlivněna nalezením vhodného <em>pivotu</em>, což může být provedeno hned několika způsoby. <em>Pivot</em> se často hledá pomocí pseudomediánu tak, jak to původně vymyslel <a href="http://cs.wikipedia.org/wiki/C._A._R._Hoare" title="Charles Antony Richard Hoare na wikipedii">C. A. R. Hoare</a>, vynálezce quicksortu. Quicksort jde implementovat rekurzivně(zde uvedeno) i nerekurzivně(nutno použít explicitní zásobník).</p>
+<p><strong>Složitost:</strong> obecně lineárně logaritmická, O(N * log<sub>2</sub>N)<br>
+<strong>Stabilita:</strong> nestabilní<br>
+<strong>Přirozenost:</strong> nepřirozená</p>
+<p><strong>Výhody:</strong> na náhodných datech a při dobré volbě pivota nejrychlejší<br>
+<strong>Nevýhody:</strong>  v nejhorším případě má kvadratickou složitost O(N * log<sub>2</sub>N), nestabilní</p>
+<p></p>
+<div class="geshifilter"><pre class="ruby geshifilter-ruby" style="font-family:monospace;"><span class="co1"># wrapper pro počátek rekurze</span>
+<span class="kw1">def</span> quickSort
+   qsort<span class="br0">(</span><span class="nu0">0</span>, <span class="re0">$A</span>.<span class="me1">length</span> <span class="sy0">-</span> <span class="nu0">1</span><span class="br0">)</span>
+   <span class="re0">$A</span>
+<span class="kw1">end</span>
+ 
+<span class="kw1">def</span> qsort<span class="br0">(</span>left, right<span class="br0">)</span>
+   i = left
+   j = right
+   pseudomedian = <span class="re0">$A</span><span class="br0">[</span><span class="br0">(</span>i<span class="sy0">+</span>j<span class="br0">)</span> <span class="sy0">/</span> <span class="nu0">2</span><span class="br0">]</span>
+   <span class="co1"># hledání pivotu podle C.A.R.Hoare</span>
+   <span class="kw1">until</span> i <span class="sy0">&gt;</span> j
+      <span class="kw1">while</span> <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span> <span class="sy0">&lt;</span> pseudomedian
+         i <span class="sy0">+</span>= <span class="nu0">1</span>
+      <span class="kw1">end</span>
+      <span class="kw1">while</span> <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> <span class="sy0">&gt;</span> pseudomedian
+         j <span class="sy0">-</span>= <span class="nu0">1</span>
+      <span class="kw1">end</span>
+      <span class="kw1">if</span> i <span class="sy0">&lt;</span>= j
+         <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span>, <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span> = <span class="re0">$A</span><span class="br0">[</span>j<span class="br0">]</span>, <span class="re0">$A</span><span class="br0">[</span>i<span class="br0">]</span>
+         i <span class="sy0">+</span>= <span class="nu0">1</span>
+         j <span class="sy0">-</span>= <span class="nu0">1</span>
+      <span class="kw1">end</span>
+   <span class="kw1">end</span>
+   <span class="co1"># zanoření do obou intervalů</span>
+   qsort<span class="br0">(</span>left, j<span class="br0">)</span>  <span class="kw1">if</span> left <span class="sy0">&lt;</span> j
+   qsort<span class="br0">(</span>i, right<span class="br0">)</span> <span class="kw1">if</span> i <span class="sy0">&lt;</span> right
+<span class="kw1">end</span></pre></div>
+<p> </p>
+<p><strong>Víte, jak napsat tyto algoritmy, aby byly více "rubínové"? Dejte mi, prosím, vědět v komentáři.</strong></p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://dudka.cz/studyIAL">Výpisky z kurzu IAL Kamila Dudky</a>        </div>
+              <div class="field-item even">
+                    <a href="https://akela.mendelu.cz/~xkubala/pt/sorts.htm">Řazení v jazyce Pascal</a>        </div>
+        </div>
+</div>
+</fieldset>
+

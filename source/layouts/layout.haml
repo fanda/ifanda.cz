@@ -1,0 +1,15 @@
+!!! html
+%html
+  = partial '/layouts/head'
+
+  %body.one-sidebar-right{:class => "#{page_classes}"}
+    #container
+      = partial '/layouts/header'
+
+      %section#center.container.row.wrapper
+        %section#content.content.threequarter
+          .inn= yield
+        %aside#sidebar-right.wrapper.quarter
+          .inn Sidebar right
+
+      = partial '/layouts/footer'

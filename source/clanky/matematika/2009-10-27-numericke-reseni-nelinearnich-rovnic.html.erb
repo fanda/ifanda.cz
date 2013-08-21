@@ -1,0 +1,78 @@
+---
+title: Numerické řešení nelineárních rovnic
+date: 2009-10-27 14:33
+layout: article
+comments: false
+tags: [matematika]
+geshifilter: false
+---
+<p>Budu se zabývat úlohami, kde hledáme      reálné řešení rovnice      <var>f</var>(<var>x</var>)  =  0, kde <var>f</var> je spojitá      reálná funkce na intervalu      &lt;<var>a</var><sub><var>o</var></sub>, <var>b</var><sub>0</sub>&gt;.      Při řešení      předpokládáme, že      <var>f</var>(<var>a</var><sub>0</sub>)  ⋅      <var>f</var>(<var>b</var><sub>0</sub>) &lt; 0, tedy že      funkční hodnoty dvou různých bodů      mají opačná znaménka a že      <var>f</var> má v intervalu      &lt;<var>a</var><sub>0</sub>,<var>b</var><sub>0</sub>&gt;      právě jeden kořen. Řešení      hledáme se zadanou přesností ε &gt; 0.    </p>
+SPLIT
+<p>      Než se však lze pustit do řešení      rovnice, musí se provést <strong>separace      kořenů</strong>, tedy odhadnutí, kde zhruba se      požadovaný kořen nalézá. Tento postup      bohužel není algoritmizovatelný. K separaci      kořenů je potřeba jistá zkušenost      či znalost matematiky. V dnešní době se k      tomu ale stejně využívá      výpočetní technika.    </p>
+<h2>      Metody numerického řešení      nelineárních rovnic:    </h2>
+<ul>
+<li>      <a href="#metoda-puleni-intervalu">Metoda půlení internevali (bisekce)</a>    </li>
+<li>      <a href="#metoda-regula-falsi">Metoda regula falsi</a>    </li>
+<li>      <a href="#metoda-secen">Metoda sečen</a>    </li>
+<li>      <a href="#newtonova-metoda">Newtonova metoda</a>    </li>
+<li>      <a href="#metoda-proste-iterace">Metoda prosté iterace</a>
+</li>
+</ul>
+<h2>      <a name="metoda-puleni-intervalu">Metoda půlení      intervalu</a>    </h2>
+<p>      Pokud je splněna podmínka přítomnosti      právě jednoho kořene na intervalu      &lt;<var>a</var><sub>0</sub>,<var>b</var><sub>0</sub>&gt;, metoda      vždy vede k řešení a vždy konverguje      stejně pomalu.     </p>
+<p>      Postup je jednoduchý. Dělíme interval na poloviny a      zkoumáme, která půlka původního      intervalu splňuje podmínku opačných znamének      funkčních hodnot. Na tom intervalu totiž      leží hledané řešení a abychom      jej ještě více upřesnili, znovu jej      dělíme a zkoumáme, až dokud není      dosaženo požadované přesnosti.    </p>
+<p>      Vzato matematicky pro <var>k</var>  ϵ  <u><b>N</b></u>, bod      <var>x</var><sub><var>k</var> + 1</sub>,      rozdělující interval      &lt;<var>a</var><sub><var>k</var></sub>,      <var>b</var><sub><var>k</var></sub>&gt;, získáme z rovnice<br>
+<img src="/sites/default/files/pictures/matematika/xk+1.png" alt="x_k+1 = (a_k + b_k)/2">
+</p>
+<ul>      Potom platí:
+<li>      je-li <var>f</var>(<var>x</var><sub><var>k</var> +      1</sub>) ⋅ <var>f</var>(<var>a</var><sub><var>k</var></sub>) &lt; 0,      pak <var>x</var> ϵ &lt;<var>a</var><sub><var>k</var></sub>,      <var>x</var><sub><var>k</var> + 1</sub>&gt;    </li>
+<li>      je-li <var>f</var>(<var>x</var><sub><var>k</var> +      1</sub>) ⋅ <var>f</var>(<var>b</var><sub><var>k</var></sub>) &lt; 0,      pak <var>x</var> ϵ &lt;<var>b</var><sub><var>k</var></sub>,      <var>x</var><sub><var>k</var> + 1</sub>&gt;    </li>
+<li>      je-li <var>f</var>(<var>x</var><sub><var>k</var> + 1</sub>)   =  0, pak      <var>x</var>  =  <var>x</var><sub><var>k</var> + 1</sub>     </li>
+</ul>
+<p>      Postup opakujeme <strong>dokud není dosažena      požadovaná přesnost</strong> a neplatí,      že <var>b</var><sub><var>k</var></sub>  -       <var>a</var><sub><var>k</var></sub> &lt; 2ε.    </p>
+<p>      Dá se vypočítat i počet kroků,      který je potřeba k dosažení      určité přesnosti a to pomocí vzorce<br>
+ <img src="/sites/default/files/pictures/matematika/pocet-kroku.png" alt="l/2^k &lt; 2*epsilon">,<br>
+kde <var>l</var> je délka intervalu (absolutní hodnota) a<var>k</var> je počet kroků.    </p>
+<h2>      <a name="metoda-regula-falsi">Metoda regula falsi</a>    </h2>
+<p>      Tato metoda je podobná jako metoda půlení      intervalu, ale interval &lt;      <var>a</var>      ,      <var>b</var>      &gt; dělíme na dvě obecně      různé části a to v poměru<br>
+<img src="/sites/default/files/pictures/matematika/pomer.png" alt="abs(f(a))/abs(f(b))">.<br>
+Regula falsi konverguje vždy a rychleji než metoda      půlení intervalu, ale je      náročnější na výpočet.    </p>
+<p>      Dělící bod      <var>x</var>      <sub><var>k</var></sub>      získáme z rovnice<br>
+ <img src="/sites/default/files/pictures/matematika/vzorec-regula-falsi.png" alt="vzorec metody regula falsi"><br>
+ a výpočet zastavíme pokud pro      <var>k</var>      ϵ      <u><b>N</b></u>      platí: |      <var>x</var>      <sub><var>k</var></sub>      -       <var>x</var>      <sub><var>k</var> - 1</sub>      |&lt; ε.    </p>
+<h2>      <a name="metoda-secen">Metoda sečen</a>    </h2>
+<p>      Od předchozích dvou se dost liší.      Rozdíl je v tom, že místo <var>a</var><sub>0</sub>,      <var>b</var><sub>0</sub> použijeme vždy posledně      vypočtené body <var>x</var><sub>0</sub>,      <var>x</var><sub>1</sub>. Také konvergence už není      zaručena, je ovšem rychlejší.    </p>
+
+<p>      <var>x</var><sub>0</sub>  =  <var>b</var><sub>0</sub>,       <var>x</var><sub>1</sub>  =  <var>a</var><sub>0</sub>    </p>
+<p><img src="/sites/default/files/pictures/matematika/vzorec-metoda-secen.png" alt="vzorec numericke metody sečen">     </p>
+<p>      Dokud |<var>x</var><sub><var>k</var></sub>  -       <var>x</var><sub><var>k</var> - 1</sub> |&lt; ε nebo dokud      <var>i</var> nebude rovno předepsanému počtu      kroků.    </p>
+
+<h2>      <a name="newtonova-metoda">Newtonova metoda (metoda tečen)</a>    </h2>
+<p>      Při řešení jedné      nelineární rovnice nás zajímá      konkrétně jednobodová varianta metody.      Existují totiž i varianty Newtonovy metody pro      řešení soustav rovnic(dvoubodové,      vícebodové). Metoda předpokládá      existenci a znalost první derivace. Konvergence je      nejrychlejší ale není zaručena.    </p>
+<p>      Tečna ke grafu funkce <var>f</var> v bodě      [<var>x</var><sub><var>i</var> - 1</sub>,      <var>f</var>(<var>x</var><sub><var>i</var> - 1</sub>)] má rovnici     </p>
+<p>      <var>t</var>      <sub><var>i</var> - 1</sub>      (      <var>x</var>      )  =       <var>f</var>      (      <var>x</var>      <sub><var>i</var> - 1</sub>      )  +  (      <var>x</var>      -       <var>x</var>      <sub><var>i</var> - 1</sub>      ) ⋅      <var>f</var>      '(      <var>x</var>      <sub><var>i</var> - 1</sub>      )       </p>
+<p> s nulovým bodem<br>
+<img src="/sites/default/files/pictures/matematika/vzorec-newtonova-metoda.png" alt="vzorec pro nulový bod Newtonovy metody">
+</p>
+<p>      Opět dokud |<var>x</var><sub><var>i</var></sub>  -       <var>x</var><sub><var>i</var> - 1</sub> |&lt; ε nebo dokud      <var>i</var> nebude rovno předepsanému počtu      kroků.    </p>
+<h3>      Postup při řešení pomocí Newtonovy metody je následovný.    </h3>
+<ol>
+<li>      Ověříme podmínky konvergence    </li>
+<li>      Zvolíme počáteční aproximaci      kořene <var>x</var><sub>0</sub>    </li>
+<li>      bodem [<var>x</var><sub>0</sub>,      <var>f</var>(<var>x</var><sub>0</sub>)] vedeme tečnu ke grafu      funkce <var>f</var>(<var>x</var>)    </li>
+<li>      její průsečík s osou x      označíme <var>x</var><sub>1</sub>    </li>
+<li>      iterujeme kroky 3 a 4.    </li>
+</ol>
+<ol>
+<strong>      Nejsou-li ověřeny všechny      následující podmínky konvergence,      nemusí metoda konvergovat.</strong>
+<li>      <strong>Uzavřený</strong> interval      &lt;<var>a</var>,<var>b</var>&gt;    </li>
+<li>      na &lt;<var>a</var>,<var>b</var>&gt; se nechází      právě jeden kořen    </li>
+<li>      funkce <var>f</var>'(<var>x</var>) a <var>f</var>''(<var>x</var>)      jsou spojité a na intervalu &lt;<var>a</var>,<var>b</var>&gt;       nemění znaménko.    </li>
+</ol>
+<p>      Počáteční aproximace se pak      určí podle rozboru vztahu      <var>f</var>(<var>x</var><sub><var>o</var></sub>) ⋅      <var>f</var>''(<var>x</var><sub>0</sub>) &gt; 0,  pro      <var>x</var><sub>0</sub> ϵ &lt;<var>a</var>,<var>b</var>&gt;.    </p>
+
+<h2>      <a name="metoda-proste-iterace">Metoda prosté iterace</a>    </h2>
+<p>      Spočívá v drobné modifikaci funkce      <var>f</var>(<var>x</var>) na funkci <var>g</var>(<var>x</var>),      např.: <var>g</var>(<var>x</var>)  =  <var>f</var>(<var>x</var>)       +  <var>x</var>.    </p>
+<p>      Počáteční odhad <var>x</var><sub>0</sub> je      upřesnován podle <var>x</var><sub><var>i</var></sub>  =       <var>g</var>(<var>x</var><sub><var>i</var> - 1</sub>) až dokud      |<var>x</var><sub><var>i</var></sub>  -  <var>x</var><sub><var>i</var> -      1</sub> |&lt; ε.    </p>
+<p>      Najít vhodnou iterační funkci může      být velmi obtížné a      ověření podmínek konvergence      bývá často problematické.     </p>
+

@@ -1,0 +1,61 @@
+---
+title: Perlovský modul GEO
+date: 2009-05-31 20:21
+layout: article
+comments: false
+tags: [it, perl]
+---
+<p><img style="float:left;" src="/a/pix/perl-sm.png" alt="Perl Camel"><span style="width:70%;float:right;">Perl má nespočet modulů a knihoven s nejrůznějšími funkcemi, což je jeho obrovská výhoda. Byl jsem nadšen, když jsem zjistil, že Perl má modul i pro zjištění místa odeslání zprávy podle IP adresy a zobrazení vlajky příslušného státu. A to vše jen na pár řádek kódu. Představím Vám funkci <em>get_country_flag()</em>, která na základě IP adresy vrátí cestu k obrázku vlajky státu pravděpodobného umístení počítače.</span></p>
+<div style="clear:both;"></div>
+SPLIT
+<h2>Kód pro získání symbolu státu díky IP adrese</h2>
+<p>Z knihovny GEO je pro tento případ užití potřeba pouze dva moduly a to<br>
+</p>
+
+<% code "perl" do %>
+use Geo::IP; # zjištění státu podle IP adresy
+use Geo::CountryFlags; # vlajka státu podle indicie
+<% end %>
+<a href="http://search.cpan.org/~borisz/Geo-IP-1.38/lib/Geo/IP.pm" title="Stránka perlovského modulu Geo::IP">Geo::IP</a> je modul, který na základě vlastní databáze IP adres vyhledá jméno státu, odkud IP adresa pochází. Databází je několik a vedle volně přístupných verzí existují i velké komerční databáze. V kódu je použita databáze GeoIP.dat, která je volně ke stažení <a href="http://geolite.maxmind.com/download/geoip/database/" title="Databáze IP adres">zde</a>.
+<p>Druhý modul, jež obhospodaří název státu vlajkou, se jmenuje <a href="http://search.cpan.org/~miker/Geo-CountryFlags-1.01/CountryFlags.pm" title="Stránka perlovského modulu Geo::CountryFlags">Geo::CountryFlags</a>. Díky tomu, že soubory s obrázky vlajek jsou přímo v instalačním balíku modulu, je jeho použítí přímočaře jednoduché.</p>
+<p>Každý z nich poskytne objekt, který po inicializaci vše vykoná za programátora jednou funkcí.<br>
+</p>
+
+
+<% code "perl" do %>
+my $gcf = new Geo::CountryFlags;
+# konstruktor objektu $gi přebírá cestu k IP databázi a nastavení
+my $gi = Geo::IP->new("./GeoIP.dat", GEOIP_MEMORY_CACHE);
+# vložením české IP adresy vrátí "cz"
+my $country_code = $gi->country_code_by_addr($ip_address);
+# vložením "cz" vrátí českou vlajku
+my $flag_path = $gcf->get_flag($country_code, "./cesta/k/vlajkam");
+<% end %>
+
+Je-li proměnná <em>$flag_path</em> definována, je v ní cesta k příslušné vlajce státu. Návratovou hodnotu funkce ošetří podmíněný operátor ? :<br>
+<br>
+<% code "perl" do %>
+ defined $flag_path  ?
+   return $flag_path : return DEFAULT_FLAG;
+<% end %>
+Jednoduché, rychlé a pohodlné.
+<br>
+<h2>Celý kód funkce v jazyce Perl</h2>
+<% code "perl" do %>
+sub get_country_flag() {
+  use Geo::IP; # zjištění státu podle IP adresy
+  use Geo::CountryFlags; # vlajka státu podle indicie
+  my $gcf = new Geo::CountryFlags;
+  # konstruktor objektu $gi přebírá cestu k IP databázi a nastavení
+  my $gi = Geo::IP->new("./GeoIP.dat", GEOIP_MEMORY_CACHE);
+  # vložením české IP adresy vrátí "cz"
+  my $country_code = $gi->country_code_by_addr($ip_address);
+  # vložením "cz" vrátí českou vlajku
+  my $flag_path = $gcf->get_flag($country_code, "./cesta/k/vlajkam");
+  defined $flag_path  ?
+    return $flag_path : return DEFAULT_FLAG;
+}
+<% end %>
+
+<p>Knihovna modulů GEO je funkčně velmi obsáhlá. Nebudu se dál pokoušet popisovat její další jednotlivé části, avšak odkážu na <a href="http://cpan.uwinnipeg.ca/search?query=GEO" title="Vyhledávám GEO na CPAN">stránku</a>, kde si můžete vyhledat modul podle zájmu i se všemi podstatnými informacemi.</p>
+

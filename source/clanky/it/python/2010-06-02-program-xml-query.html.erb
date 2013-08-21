@@ -1,0 +1,623 @@
+---
+title: Program XML Query
+date: 2010-06-02 13:14
+layout: article
+comments: false
+tags: [it, python]
+---
+<p>Program XML Query v jazyce Python vznikl jako školní projekt z předmětu Principy programovacích jazyků a OOP. Zde jeho zadání, popisný text k vypracované implementaci a implementace v jazyce Python.</p>
+SPLIT
+<h2>Zadání</h2>
+<p>Skript provádí vyhodnocení zadaného dotazu, jenž je podobný příkazu SELECT jazyka SQL, nad vstupem ve formátu XML. Výstupem je XML obsahující elementy splňující požadavky dané dotazem. Dotazovací jazyk má zjednodušené podmínky a syntaxi.</p>
+<h3>Dotazovací jazyk</h3>
+<h3>Neformální zápis struktury dotazovacího jazyka</h3>
+<p><span class="geshifilter"><code class="text geshifilter-text">SELECT element LIMIT n FROM element|ROOT WHERE condition ORDER BY element|attribute ASC| DESC</code></span></p>
+<h3>Celá bezkontextová gramatika</h3>
+<ul>
+<li>neterminály jsou úhlových závorkách</li>
+<li>&lt;QUERY&gt; je startující neterminál</li>
+<li>tokeny jsou odděleny bílým znamek</li>
+<li>jazyk je case-sensitive</li>
+<li>Priorita operátorů (od nejvyšší): NOT, AND, OR</li>
+<li>AND a OR jsou levě asociativní</li>
+</ul>
+<pre>
+&lt;QUERY&gt; --&gt; SELECT element &lt;LIMITn&gt; FROM &lt;FROM-ELM&gt; &lt;WHERE-CLAUSE&gt; &lt;ORDER-CLAUSE&gt;
+&lt;LIMITn&gt; --&gt; empty
+&lt;LIMITn&gt; --&gt; LIMIT number
+&lt;FROM-ELM&gt; --&gt; element
+&lt;FROM-ELM&gt; --&gt; ROOT
+&lt;WHERE-CLAUSE&gt; --&gt; empty
+&lt;WHERE-CLAUSE&gt; --&gt; WHERE &lt;CONDITION&gt;
+&lt;CONDITION&gt; --&gt; ( &lt;CONDITION&gt; )
+&lt;CONDITION&gt; --&gt; NOT &lt;CONDITION&gt;
+&lt;CONDITION&gt; --&gt; &lt;CONDITION&gt; AND &lt;CONDITION&gt;
+&lt;CONDITION&gt; --&gt; &lt;CONDITION&gt; OR &lt;CONDITION&gt;
+&lt;CONDITION&gt; --&gt; &lt;ELEMENT-OR-ATTRIBUTE&gt; &lt;RELATION-OPERATOR&gt; &lt;LITERAL&gt;
+&lt;LITERAL&gt; --&gt; string
+&lt;LITERAL&gt; --&gt; number
+&lt;RELATION-OPERATOR&gt; --&gt; CONTAINS
+&lt;RELATION-OPERATOR&gt; --&gt; =
+&lt;RELATION-OPERATOR&gt; --&gt; &gt;
+&lt;RELATION-OPERATOR&gt; --&gt; &lt;
+&lt;ELEMENT-OR-ATTRIBUTE&gt; --&gt; element
+&lt;ELEMENT-OR-ATTRIBUTE&gt; --&gt; attribute
+&lt;ORDER-CLAUSE&gt; --&gt; empty
+&lt;ORDER-CLAUSE&gt; --&gt; ORDER BY &lt;ELEMENT-OR-ATTRIBUTE&gt; &lt;ORDERING&gt;
+&lt;ORDERING&gt; --&gt; ASC
+&lt;ORDERING&gt; --&gt; DESC
+</pre>
+<p><br></p>
+<h3>Lexémy</h3>
+<p><strong>empty</strong> je prázdný řetězec. <strong>number</strong> je celé číslo v běžném 32-bitovém celočíselném rozsahu implementačního jazyka. <strong>element</strong> je identifikátor elementu jazyka XML bez ohraničující úhlových závorek. <strong>attribute</strong> je identifikátor atributu se znamek @ na začátku jako prefix. <strong>string</strong> je řetězec zapsaný v uvozovkách, který neobsahuje žádné netisknutelné znaky, escape sekvence, konec řádku ani uvozovky.</p>
+<h3>Sémantika dotazovacího jazyka</h3>
+<p>Dotaz v klauzuli <strong>FROM</strong> definuje zdrojový element (viz neterminál &lt;FROM-ELM&gt;), kde se následně hledají vnořené výstupní elementy z klausule <strong>SELECT</strong>, které splňují podmínky dané v klauzuli <strong>WHERE</strong>. Poté může být výsledný seznam elementů seřazen klausulí <strong>ORDER BY</strong> a ořezán omezením <strong>LIMIT</strong> na požadovaný maximální počet elementů.<br>
+Hledání zdrojového elementu se provádí do hloubky, dokud se nenarazí na první výskyt zdrojového elementu, kde bude prováděno další zpracování (již se neuvažuje další nepřekrývající zdrojový element jinde na vstupu). Vzájemné zanoření totožných výstupních elementů není řešeno. Výstupní element může být pokaždé zanořen do jiné úrovně ve zdrojovém elementu (nepřekrývajícím způsobem). Klíčové slovo <strong>ROOT</strong> zastupuje virtuální kořenový element zastupující celý XML dokument, který pak obsahuje skutečný kořenový element. Entita z podmínky v klauzuli <strong>WHERE</strong> se hledá opět do hloubky po první svůj výskyt. Není-li tato entita v aktuálně kontrolovaném výstupním elementu nalezena nebo je její první výskyt špatného typu, je výsledek porovnání (viz neterminál &lt;RELATION-OPERATOR&gt;) nepravdivý.<br>
+Výstupní elementy jsou na výstup kopírovány v nezměněné podobě (včetně všech atributů, hodnot a podelementů), případně obaleny kořenovým elementem v závislosti n parametrech skriptu.<br>
+V případě kolize jmen atributů nebo elementů je uvažován první načtený.</p>
+<h3>Parametry programu</h3>
+<ul>
+<li>
+<strong>--help</strong>   nápověda programu</li>
+<li>
+<strong>--input=filename.ext</strong>   zadaný vstupní soubor ve formátu XML (pokud chybí, čte se standardní vstup)</li>
+<li>
+<strong>--output=filename.ext</strong>   zadaný výstupní soubor ve formátu XML (pokud chybí, píše se na standardní výstup)</li>
+<li>
+<strong>-q=query</strong>   zadaný dotaz v dotazovacím jazyce</li>
+<li>
+<strong>-qf=filename.ext</strong>   dotaz v dotazovacím jazyce zadaný v externím textovém souboru (nelze kombinovat s <strong>-q</strong>
+</li>
+<li>
+<strong>-n</strong>   negenerovat XML hlavičku na výstup skriptu</li>
+<li>
+<strong>-r=element</strong>   jméno párového kořenového elementu obalující výsledky</li>
+</ul>
+<p><br></p>
+<h2>Popis vypracované implementace</h2>
+<p>Pro <em>XML Query</em> byl zvolen Python jako implementační jazyk. Python nutí důsledně dodržovat určitou kulturu psaní zdrojového kódu, čímž kód získává napohled hezkou a dobře čitelnou strukturu. Také více vybízí k používání objektově orientovaného paradigma. Objektově orientovaný přístup skript <em>XML Query</em> využívá přinejmenším k blokovému uspořádání jednotlivých dekompozičních částí návrhu a mnoho potenciálu objektového programování tak zůstává nevyužito. Důvodem je především snaha o zachování jednoduchosti. </p>
+<p>Z hlediska dekompozice byl program v návrhu rozdělen na tři části a to na získání a zpracování vstupních parametrů a dotazovacího jazyka, dále hledání, filtrování a řazení dat a jako poslední část výstup výsledku předchozí části. Tato dekompozice zůstala zachována jen částečně, jelikož výstup výsledků se ukázal implementačně jednoduchý a jakákoliv snaha jej někam začleňovat by program znepřehlednila. Naopak vstup a zpracování parametrů se ukázaly jako hodny státi se soběstačnou jednotkou, neboť se kvůli nestandardnímu parametru –qf nemohl (nebo jen s potížemi) použít modul getopt. Výsledkem je program sestávající ze tří tříd pro objekty, jež vycházejí z dekompozice programu, dále z pomocné struktury a jednoho funktoru pro snadné výpisy chyb a ukončení programu.<br>
+</p>
+<h3>1. část programu: zpracování vstupních parametrů, třída OptionHandler</h3>
+<p>Jak bylo řečeno, jedná se o část, která se díky výskytu nestandardních vstupních parametrů stala samostatnou jednotkou, respektive třídou. Jedná se ovšem o velmi jednoduchou třídu, která si vystačí s jedním atributem a jednou metodou. Veškerou práci vykoná konstruktor, jehož úkolem je naplnit slovník přepínačů a parametrů. Použita je, stejně jako v předešlém skriptu, metoda regulárních výrazů nad řetězcem všech parametrů ve tvaru, jak je zapsal uživatel, zkracující s každým dalším parametrem řetězec, takže úspěšné vyhodnocení parametrů je ekvivalentní prázdnému řetězci parametrů na konci metody. V případě skriptu <em>XML Query</em> si však tato metoda žádá podmínku vyhodnocení parametru -q až na samém konci zpracování, neboť jedině tak je zaručen vstup celého dotazu do programu. Přístup ostatních objektů k parametrům program zajišťuje zpráva get().<br>
+</p>
+<h3>2. část programu: parsování dotazu, třída Query</h3>
+<p>Vstupní dotaz se samozřejmě musí zkontrolovat, je-li syntakticky správný, a je třeba jej přeložit do jazyka Python. Dotaz je rozdělen na část čitelnou v regulárním výrazem a část nečitelnou regulárním výrazem. Zatímco první část je jednoduše a rychle zpracována pomocí prostředků jazyka Python pro regulární výrazy, druhá část vyžadovala složitější syntaktickou analýzu. Byla implementována precedenční analýza za pomoci precedenční tabulky pro vyskytující se logické operátory a za pomoci zásobníku. Vstupní řetězec je tokenizován regulárními výrazy přímo za běhu precedenční analýzy. Jednotlivé nalezené podmínky dotazu jsou uloženy do struktury Condition, složené podmínky jsou vkládány v prefixové notaci do polí libovolně do sebe zanořených. Precedenční analýza je implementována v privátní metodě třídy Query. Kromě této metody zde existuje již jen přístupová metoda get(), která vrací datovou strukturu jazyka Python, slovník, naplněnou informacemi z dotazu.<br>
+</p>
+<h3>3. část programu: získání požadovaných dat z XML souboru, třída QuerySearch</h3>
+<p>Získávání dat z XML se na první pohled zdá jako velký problém, avšak jazyk Python jej svými předprogramovanými funkcemi výrazně ulehčuje. Ze dvou přístupů k XML datům, které knihovna jazyka nabízí, byl zvolen přístup DOM, respektive jeho implementace v modulu xml.dom.minidom. Výhody a nevýhody tohoto přístupu jsou snadno zjistitelné z jiných zdrojů, proto je netřeba podrobněji rozebírat. Je potřeba zmínit snad jen to, že DOM má velké vyjadřovací schopnosti,  které jsou ovšem vykoupeny paměťovou náročností. Jinými slovy s rostoucím objemem XML souboru rostou i nároky na paměť procesu, takže program má jistou, na parametrech počítače závislou, hranici, po jejímž překročení se stává hůře použitelným. Omezení je odstranitelné volbou a implementací jiného přístupu k datům. Třída přebírá jako parametr slovník s dotazem, jak jej definuje třída Query a podle něj a za pomocí předprogramovaných funkcí prochází data. Ta jsou nejdříve načtena všechna a poté postupně filtrována tak, aby nakonec zbyla jen data uživatelem požadovaná. Děje se tak i pomocí tří privátních metod pojmenovaných pomocí klausulí dotazovacího jazyka. Z těchto tří metod za zmínku stojí alespoň metoda _where(), kde je rekurzívně implementováno filtrování vnořenými logickými podmínkami. Jejich implementace nebyla těžká a stačilo se nad problémem trochu zamyslet, o čemž více vypoví samotný zdrojový kód. Ani v této třídě nechybí metoda pro přístupovou zprávu get().</p>
+<p>Instance všech tří tříd jsou použity v bloku kódu představující hlavní běh programu. Na stejném místě je prováděn výpis výstupu programu.<br>
+<br></p>
+<h2>Implementace programu v jazyce Python</h2>
+<% code "python" do %>
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+import xml.dom.minidom as xd
+import re, sys, string, os
+
+
+"""
+    Error hanler for this program
+"""
+class Error:
+
+    def __init__(self, msg):
+        print >> sys.stderr, "Error: %s" % msg
+        sys.exit(1)
+
+# End of class Error
+
+
+"""
+    Program parameters hanler
+"""
+class OptionHandler:
+
+    def __init__(self):
+        # initialite default values of all options
+        self.options = dict(nohead   = False,
+                            input    = sys.stdin,
+                            output   = sys.stdout,
+                            query    = '',
+                            rootelem = '')
+
+        args = ' ' + ' '.join(sys.argv[1:]) # join all together
+
+        # HELP parameter
+        reg = re.compile(r" --help")
+        if reg.search(args) is not None:
+          args = reg.sub('', args)
+          if args is not '': # other stuff passed
+            Error("no more parameters with --help allowed")
+          print "Program XML Query"
+          print "Usage: xqr.py -q='query'|-qf=file.ext [OPTIONS]";
+          print "\nParameters (only one at time allowed)";
+          print "-q='query'\t\tQuery (without '')";
+          print "-qf=file.ext\t\tExtern file with query";
+          print "\nAvailable options:";
+          print "--input=file1.ext\tInput XML file";
+          print "--output=file2.ext\tOutput XML file";
+          print "-r=root-element\t\tName of the element to wrap result";
+          print "-n\t\t\tNot to generate XML header";
+          print "\nOther controls:\n--help\t\t\tThis message\n";
+          sys.exit(0)
+
+        # NOHEAD option
+        reg = re.compile(r" -n")
+        if reg.search(args) is not None:
+            self.options['nohead'] = True
+            args = reg.sub('', args)
+
+        # ROOTELEM option
+        reg = re.compile(r" -r=(\S+)")
+        rem = reg.search(args)
+        if rem is not None:
+            self.options['rootelem'] = rem.group(1)
+            args = reg.sub('', args)
+
+        # INPUT file option
+        reg = re.compile(r" --input=(\S+)")
+        rem = reg.search(args)
+        if rem is not None:
+          try: # change input file handler
+            self.options['input'] = open(rem.group(1))
+          except:
+            Error("problem with input file")
+          args = reg.sub('', args)
+
+        # OUTPUT file option
+        reg = re.compile(r" --output=(\S+)")
+        rem = reg.search(args)
+        if rem is not None:
+          try: # change output file handler
+            self.options['output'] = open(rem.group(1), "w")
+          except:
+            Error("problem with output file")
+          args = reg.sub('', args)
+
+        # QUERY file option
+        reg = re.compile(r" -qf=(\S+)")
+        rem = reg.search(args)
+        if rem is not None:
+          try: # open, read whole query and close
+            fileobj = open(rem.group(1))
+            self.options['query'] = fileobj.read()
+            fileobj.close()
+          except:
+            Error("problem with query file input")
+          args = reg.sub('', args)
+
+        # QUERY parameter option (must be proceed last)
+        reg = re.compile(r" -q=(.*)")
+        rem = reg.search(args)
+        if rem is not None:
+            if self.options['query'] is not '':
+                Error("two queries defined")
+            self.options['query'] = rem.group(1)
+            args = reg.sub('', args)
+
+        # invalid parameters check
+        if args is not '':
+          Error("unknown or wrong parameters input (run with --help)")
+
+
+    # returns options dictionary
+    def getoptions(self):
+        return self.options
+
+# End of class OptHandler
+
+
+"""
+    Condition structure of WHERE-CLAUSE
+"""
+class Condition:
+
+    def __init__(self, val, op, lit):
+        self.operator = op
+        if lit[0] == '"': # literal is string
+          self.literal = lit[1:-1]
+        else: # literal is number
+          if op == 'CONTAINS':
+            Error("Operator CONTAINS accept only string literal");
+          self.literal = float(lit)
+        if val[0] == '@': # value is attribute
+            self.type = 'attribute'
+            self.id = val[1:]
+        else: # value is element
+            self.type = 'element'
+            self.id = val
+
+# End of class Condition
+
+
+"""
+    Holding XML query in a right way
+"""
+class Query:
+
+    # most of work is done in constructor
+    def __init__(self, querystring):
+        # set option query arguments to None
+        self.query = dict(limit=None, where=None, order=None)
+
+        # REGEXP of query
+        qr="SELECT\s+(\S+)\s+(.+\s)?FROM\s+(\w+)(\s+WHERE.*?)?(\s+ORDER.*)?\s*$"
+
+        reg = re.compile(qr)
+        rem = re.match(reg, querystring)
+        if rem is not None:
+          self.query['select'] = rem.group(1)
+          self.query['from'] = rem.group(3)
+
+          # parsing LIMIT query option
+          if rem.group(2) is not None:
+            relimit = re.search(r"LIMIT\s+(\d+)\s+", rem.group(2))
+            if relimit is not None:
+              self.query['limit'] = relimit.group(1)
+            else:
+              Error("wrong LIMIT definition")
+
+          # parsing WHERE query option
+          if rem.group(4) is not None:
+            self.query['where'] = self._where(rem.group(4))
+            # integer or None can be returned if wrong WHERE clause
+            if self.query['where'] is None \
+            or type(self.query['where']) == type(1):
+              Error("WHERE-CLAUSE is not valid")
+
+          # parsing ORDER query option
+          if rem.group(5) is not None:
+            self.query['order'] = self._order(rem.group(5))
+            if self.query['order'] is None:
+              Error("ORDER-CLAUSE is not valid")
+
+        else: # rem is None
+          Error("input query is not valid")
+
+
+    # WHERE-CLAUSE parser
+    def _where(self, wherestring):
+        reg = re.compile("^\s+WHERE\s(.*)$") # gets condition
+        rem = reg.match(wherestring)
+        try:
+          cond = rem.group(1) # save condition input string
+        except:
+          return None
+
+        # creating of Condition class by parsing ONE contition
+        def getCondition(cstr):
+            regc = re.compile(
+            '^\s*(@?\w+)\s+(CONTAINS|=|>|<)\s+(\\"\w+\\"|\d+|\\"\\")')
+            rec = regc.match(cstr)
+            try: # to create Condition
+              C=Condition(rec.group(1),rec.group(2),rec.group(3))
+            except:
+              return None
+            return (C, regc.sub('',cstr))
+
+        ##
+        ## nested condition PARSER
+        ##
+        #  parsing table
+        #      0   1   2   3   4   5   6
+        #      NOT AND OR  (   )   C   $
+        pt = [['<','>','>','<','>','<','>'], # NOT
+              ['<','>','>','<','>','<','>'], # AND
+              ['<','<','>','<','>','<','>'], # OR
+              ['<','<','<','<','=','<','' ], # (
+              ['' ,'>','>','' ,'>','' ,'>'], # )
+              ['' ,'>','>','' ,'>','' ,'>'], # C
+              ['<','<','<','<','' ,'<','' ]] # $
+        # help: pt[row][column]
+        #list of regexps for tokenization
+        reguls = [re.compile("^\s*NOT\s"),
+                  re.compile("^\s+AND\s"),
+                  re.compile("^\s+OR\s"),
+                  re.compile("^\s*\("),
+                  re.compile("^\s*\)")]
+        stack = [6]   # incializing stack with $
+        sterm = 6     # top term on the stack
+        interm = None # input token
+        C = None      # condition handler
+        while True:   # parsing cycle
+            action = ''
+            for i in range(7): # range of terms
+              interm = i
+              action = pt[sterm][interm]
+              if i == 5: # condition found
+                ctuple = getCondition(cond)
+                if ctuple is not None:
+                    cond = ctuple[1]
+                    C = ctuple[0]
+                    break
+              elif i != 6: # term found
+                if reguls[i].match(cond):
+                  if action != '>':
+                    cond = reguls[i].sub('', cond)
+                  break
+              # else i == 7 => interm == 6 => end of input
+            if sterm == interm and sterm == 6:
+                break
+
+            if action == '':
+              Error("syntax error in WHERE-CLAUSE")
+            elif action == '=':
+              stack.append(interm)
+            elif action == '<':
+              pos = len(stack) - 1
+              stack.append('<')
+              # look for top term in the stack
+              while type(stack[pos]) != type(1) and pos > 0:
+                  stack[pos + 1],stack[pos] = stack[pos],stack[pos + 1]
+                  pos -= 1
+              stack.append(interm)
+            elif action == '>':
+              R = ''
+              Cs = []
+              while stack[-1] != '<': # look for top '<'
+                  symbol = stack.pop() # get top symbol
+                  if type(symbol) == type(1): # term found
+                    if symbol == 5: # apply fifth grammar
+                      stack.insert(-1,C)
+                      break # and nothing more to do
+                    R = str(symbol) + R # else write term to the string
+                  else: # nonterm found
+                    Cs.append(symbol)
+                    R = '-' + R # write substitute symbol
+              stack.pop()
+              # grammar search
+              if R == '0-':
+                  stack.append(['N', Cs.pop()])
+              elif R == '3-4':
+                  stack.append(Cs.pop())
+              elif R == '-1-':
+                  stack.append(['A', Cs[0], Cs[1]])
+              elif R == '-2-':
+                  stack.append(['O', Cs[0], Cs[1]])
+            # top term search
+            pos = len(stack) - 1
+            while type(stack[pos]) != type(1):
+                pos -= 1
+            sterm = stack[pos]
+            # end of while True
+        return stack.pop() # final nested condition on the top
+
+
+    # ORDER-CLAUSE parser
+    def _order(self, orderstring):
+        reg = re.compile("^\s+ORDER BY\s(.*)$") # gets clause
+        rem = reg.match(orderstring)
+        try:
+          clause = rem.group(1)
+        except:
+          return None
+        # parse clause
+        order = dict(element=None, attribute=None)
+        reg = re.compile("(@?\w+)\s+(ASC|DESC)$")
+        rem = re.match(reg, clause)
+        if rem is None:
+          return None
+        else:
+          order['by'] = rem.group(2)
+          atrelem = rem.group(1)
+          if atrelem[0] == '@':
+            order['attribute'] = atrelem[1:] # do not include '@'
+          else:
+            order['element'] = atrelem
+        return order
+
+
+    # returns query dictionary
+    def get(self):
+        return self.query
+
+# End of class Query
+
+
+"""
+    XML search machine
+"""
+class QuerySearch:
+
+    def __init__(self, doc, query):
+        self.x = xd.parse(doc)
+        self.q = query
+        self.elements = []
+        # analyzing input query dictionary
+        if self.q['from'] == 'ROOT':
+          self.root = [self.x.documentElement]
+          if self.x.documentElement.tagName == self.q['select']:
+            self.elements = [self.x.documentElement]
+        else:
+          self.root = self.x.getElementsByTagName(self.q['from'])
+        # getting all of selected elements
+        if not self.elements:
+          for node in self.root:
+            self.elements.extend(node.getElementsByTagName(self.q['select']))
+            break # ONLY FIRST ELEMENT
+        # filter unwanted elements
+        if self.q['where'] is not None:
+          self.elements = self._where(self.q['where'], self.elements)
+        # sorting
+        if self.q['order'] is not None:
+          self._order(self.q['order'])
+        # cutting
+        if self.q['limit'] is not None:
+          self._limit(self.q['limit'])
+
+
+    # effective filtering
+    def _where(self, where, elements):
+
+        # condition choise evaluating
+        def condition(xvalue, op, value):
+            # this operator work only for numbers
+            if type(value) == type(' '):
+              if op == 'CONTAINS':
+                if xvalue.rfind(value) != -1:
+                  return True
+              val = xvalue
+            else:
+              try: # recognize number or its False for default
+                val = float(xvalue)
+              except:
+                return False
+            # those operators works for string and numbers too
+            if   op == '=':
+                return val == value
+            elif op == '>':
+                return val  > value
+            elif op == '<':
+                return val  < value
+            return False
+
+        # only one Condition to apply
+        if type(where) != type([]):
+          found = []
+          if where.type == 'element':
+            for el in elements:
+              # filtering selected elements
+              if el.tagName == where.id:
+                xvalue = el.firstChild.data
+                if condition(xvalue, where.operator, where.literal):
+                  found.append(el)
+                continue
+              # filtering nested elements
+              try:
+                for node in el.getElementsByTagName(where.id):
+                  xvalue = node.firstChild # get element input
+                  if not xvalue.hasChildNodes():
+                    if condition(xvalue.data, where.operator, where.literal):
+                      found.append(el)
+                  break
+              except:
+                pass
+          else: # where.type == 'attribute'
+            for el in elements:
+              # filtering selected elements
+              if el.hasAttribute(where.id):
+                xvalue = el.getAttribute(where.id)
+                if condition(xvalue, where.operator, where.literal):
+                  found.append(el)
+                  continue
+              # filtering nested elements
+              for subel in el.getElementsByTagName('*'):
+                if subel.hasAttribute(where.id):
+                  xvalue = subel.getAttribute(where.id)
+                  if condition(xvalue, where.operator, where.literal):
+                    found.append(el)
+                    break
+          return found
+
+        # logical operator must by applied
+        elif type(where[0]) == type(' '):
+          if   where[0] == 'A': # AND operator
+            # filter result of first filter
+            return self._where(where[2], self._where(where[1], elements))
+
+          elif where[0] == 'N': # NOT operator
+            unwanted = self._where(where[1], elements)
+            # look, i can do nice filter too ;)
+            return [e for e in elements if e not in unwanted]
+
+          elif where[0] == 'O': # OR operator
+            duplicates = self._where(where[1], elements)
+            duplicates.extend(self._where(where[2], elements))
+            return list(set(duplicates)) # my little uniq
+
+        # array of conditions appeared
+        else:
+          return _where(where[0], elements)
+
+
+    # elements sorting
+    def _order(self, order):
+        orderlist = [] # for tuples like (data, element)
+        if order['element'] is not None:
+          for el in self.elements:
+            # sorting selected elements
+            if el.tagName == self.q['select']:
+              orderlist.append((el.firstChild.data, el))
+              continue
+            # sorting nested elements
+            try:
+              for node in el.getElementsByTagName(order['element']):
+                value = node.firstChild
+                if not value.hasChildNodes():
+                    orderlist.append((value, el))
+                break
+            except:
+                pass
+        elif order['attribute'] is not None:
+          for el in self.elements:
+            if el.hasAttribute(order['attribute']):
+                # sorting selected elements
+                value = el.getAttribute(order['attribute'])
+                orderlist.append((el.getAttribute(order['attribute']), el))
+                continue
+            # sorting nested elements
+            for subel in el.getElementsByTagName('*'):
+              if subel.hasAttribute(order['attribute']):
+                value = subel.getAttribute(order['attribute'])
+                orderlist.append((value, el))
+                break
+        # ordering tuples by element's data
+        try:
+          orderlist.sort(key=lambda x: x[0].firstChild)
+        except:
+          orderlist.sort(key=lambda x: x[0])
+        # BY DESC or ASC
+        if order['by'] == 'DESC':
+          orderlist.reverse()
+
+        # fill sorted elements back
+        self.elements = [x[1] for x in orderlist]
+
+
+    # very easy limit
+    def _limit(self, limit):
+        self.elements = self.elements[:int(limit)]
+
+
+    # returns query dictionary
+    def get(self):
+        return self.elements
+
+# End of class QuerySearch
+
+
+"""
+    # MAIN #
+"""
+if __name__ == '__main__':
+  opt = OptionHandler().getoptions() # program parameters parsing
+  query = Query(opt['query']).get()  # query parsing
+
+  # OUTPUT
+  #
+  if not opt['nohead']: # HEAD?
+    print >> opt['output'], '<?xml version="1.0" encoding="utf-8"?>'
+
+  if opt['rootelem'] is not '': #  ROOT ELEMENT?
+    print >> opt['output'], ''.join(["<", opt['rootelem'], ">"])
+
+  ### getting and writing results
+  for element in QuerySearch(opt['input'],query).get():
+    print >> opt['output'], element.toxml()
+  ###
+
+  if opt['rootelem'] is not '': # /ROOT ELEMENT?
+    print >> opt['output'], ''.join(["</", opt['rootelem'], ">"])
+  #
+  # END of OUTPUT
+
+  # closing of opened files
+  if opt['output'] != sys.stdout:
+    opt['output'].close()
+  if opt['input'] != sys.stdin:
+    opt['input'].close()
+
+# End of program xqr.py
+<% end %>

@@ -1,0 +1,28 @@
+---
+title: Fanda Internetu
+pageable: true
+---
+%section
+  - page_articles.each do |article|
+    %article.inlist{"style"=>"display: block"}
+      %header
+        %h1
+          %a{:href => article.url}= article.title
+        %time= article.date.strftime('%e. %_m. %Y')
+      %section.summary
+        = article.summary
+      %footer
+        %a.label{:href => article.url} Číst
+        - if article.tags.any?
+          %span.label.label-red
+            = article.tags.last.capitalize unless article.tags.empty?
+  .paginate
+    - if prev_page
+      %span= link_to 'Předchozí strana', prev_page
+    %span
+      = page_number
+      of
+      = num_pages
+    - if next_page
+      %span= link_to 'Další strana', next_page
+

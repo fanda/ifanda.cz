@@ -1,0 +1,88 @@
+---
+title: Nastavení GIT repozitáře pro přístup přes HTTP
+date: 2009-11-17 12:03
+layout: article
+comments: false
+tags: [internet]
+geshifilter: true
+---
+<p>Pro školní projekt, který vypracováváme v týmu, se hodí mít systém pro správu verzí. Zvolili jsme program Git, jenž slibuje efektivní a přitom jednoduchou práci s repozitářem a je čím dál víc populárnější. Popíšu, jak jsem nastavoval Git na serveru, kde běží Debian.</p>
+<p>Předpokladem k nastavení je nainstalovaný webový server Apache2 a program git-core. Dále je potřeba mít pravomoce na editaci konfiguračních souborů Apache, jeho restart příkazem (na Debianu)<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ <span class="sy0">/</span>etc<span class="sy0">/</span>init.d<span class="sy0">/</span>apache2 restart</pre></div>
+<br>
+a práva měnit vlastníky souborů. Zkrátka a dobře je potřeba mít přístup k uživateli root, aby se dalo všechno správně a bezproblémů nastavit.
+<h2>Krok první: vytvoření prázdného repozitáře Gitu</h2>
+<p>Nejprve je potřeba vytvořit složku, kde repozitář Gitu bude. Nejlepší je vytvořit ji v <strong>DocumentRoot</strong>u složek webového serveru. Na Debianu DocumentRoot obvykle bývá ve <em>/var/www</em>, tedy vytvořím složku <em>/var/www/mojerepo.git</em> a v ní rovnou založím prázdný repozitář Gitu.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ <span class="kw3">cd</span> <span class="sy0">/</span>var<span class="sy0">/</span>www
+$ <span class="kw2">mkdir</span> mojerepo.git
+$ <span class="kw3">cd</span> mojerepo.git
+$ git <span class="re5">--bare</span> init <span class="co0"># nebo git --bare init-db</span></pre></div>
+<br>
+Novým souborům, které Git vytvořil, je nutné nastavit příslušná přístupová práva tak, aby k nim Apache mohl bezproblémů přistupovat. Debian má pro Apache vyhrazeného uživatele <em>www-data</em>, takže mu stačí přisoudit vlastnictví složky mojerepo.git, včetně všech podsložek a souborů.<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ <span class="kw2">chown</span> <span class="re5">-R</span> www-data:www-data . </pre></div>
+<h2>Krok druhý: povolení DAV pro tuto složku</h2>
+<p>Co je to <abbr title="Web-based Distributed Authoring and Versioning">WebDAV</abbr>? Jedná se o rozšíření HTTP protokolu pravidly, která dovolují více klientům přistupovat, vytvářet, mazat nebo jinak upravovat zdroje umístěné na serveru. Používá se například pro přístup k repozitářům programů pro správu verzí přes HTTP :)</p>
+<p>S nainstalovaným Apache2 se zapnutí příslušných modulů webového serveru provede jedním příkazem<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ a2enmod dav dav_fs</pre></div>
+<br>
+Následnou konfiguraci zapíši do nového konfiguračního souboru <em>git.conf</em> ve složce <em>/etc/apache2/conf.d</em>, ale stejně tak se může zapsat přímo do souboru <em>/etc/apache2/httpd.conf</em>.<br>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">&lt;Location /mojerepo.git&gt;
+     DAV On
+     AuthType Basic
+     AuthName "Git"
+     AuthUserFile /etc/apache2/passwd.git
+     Require valid-user
+&lt;/Location&gt;</pre></div>
+<br>
+V konfiguračním souboru se ale odkazujeme na soubor <em>/etc/apache2/passwd.git</em> a ten ještě neexistuje. K jeho vytvoření slouží utilita htpasswd. Vytvoření souboru s heslem je pomocí ní lehké, například příkazem<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ htpasswd <span class="re5">-c</span> <span class="sy0">/</span>etc<span class="sy0">/</span>apache2<span class="sy0">/</span>passwd.git jmeno_uzivatele</pre></div>
+<br>
+Po jeho spuštění jsem vyzván k zadání hesla. Přepínač -c znamená, že se vytvoří nový soubor. Pokud chci uživatele jen přidat, přepínač vynechám.
+<p>Nyní stačí restartovat Apache<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ <span class="sy0">/</span>etc<span class="sy0">/</span>init.d<span class="sy0">/</span>apache2 restart</pre></div>
+<br>
+a zkontrolovat umístění repozitáře na příslušné HTTP adrese a s příslušnými přihlašovacími údaji.
+<h2>Krok třetí: nastavení klienta</h2>
+<p>Nejprve si klient musí vytvořit místní repozitář Gitu nebo si nějaký naklonovat. Klient zkrátka musí mít něco, s čím se dá pracovat, takže pokud to nemáte, opakujte první krok i na straně klienta.<br>
+Já místní repozitář už mám a můžu programu Git říct, kde je jeho vzdálený protějšek. Git na to má vlastní příkaz (pozor na / na konci)<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ git config remote.origin.url http:<span class="sy0">//&lt;</span>uzivatel<span class="sy0">&gt;</span>:<span class="sy0">&lt;</span>heslo<span class="sy0">&gt;@&lt;</span>adresa_serveru<span class="sy0">&gt;/</span>mojerepo.git<span class="sy0">/</span></pre></div>
+<br>
+Hned můžu udělat svůj první commit podobným příkazem<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ git push http : <span class="sy0">//&lt;</span>uzivatel<span class="sy0">&gt;</span>:<span class="sy0">&lt;</span>heslo<span class="sy0">&gt;@&lt;</span>adresa_serveru<span class="sy0">&gt;/</span>mojerepo.git<span class="sy0">/</span> <span class="re5">--all</span></pre></div>
+<br>
+Při dalších commitech už za push nemusím nic dávat, takže jednoduše git push.
+<p><strong>Zde ale pozor. Možná Vám to půjde, možná ne a záleží to na verzi Git, kterou používáte.</strong> Git verze 1.5.6 a 1.6.0 neumí zapisovat (push) na http repozitáře serveru. Verze 1.6.1 a vyšší jsou v pořádku. Chybová hláška, kterou dostanete je<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">Unable to create branch path &lt;http_adresa&gt;/repo.git/info
+Error: cannot lock existing info/refs
+error: failed to push some refs to '&lt;http_adresa&gt;/repo.git'</pre></div>
+<br>
+Stejný problém jsem řešil i já a pomohlo mi vytvoření souboru <em>.netrc</em> ve svém domovském adresáři. Struktura souboru je jednoduchá<br>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">machine &lt;adresa_serveru&gt;
+login &lt;jmeno_uzivatele&gt;
+password &lt;heslo_uzivatele&gt;</pre></div>
+<br>
+Protože zde ukládám svoje heslo, nastavím souboru práva jen pro vlastní přístup příkazem<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ <span class="kw2">chmod</span> <span class="nu0">600</span> ~<span class="sy0">/</span>.netrc</pre></div>
+<br>
+A je to. Commit provádím úplně stejně příkazem<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">$ git push origin</pre></div>
+<p>Snad Vám postup pomůže k bezproblémovému nastavení programu Git na serveru a zpřístupnění jeho repozitářů přes HTTP rozhraní. Mohou se vyskytnout ještě další problémy, ale s těmi pomůže Google :)</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://www.kernel.org/pub/software/scm/git/docs/howto/setup-git-server-over-http.txt">Setting up a git repository which can be pushed into and pulled from over HTTP(S)</a>        </div>
+              <div class="field-item even">
+                    <a href="http://support.dce.felk.cvut.cz/mediawiki/index.php/Git">Git na DCE wiki</a>        </div>
+        </div>
+</div>
+</fieldset>
+

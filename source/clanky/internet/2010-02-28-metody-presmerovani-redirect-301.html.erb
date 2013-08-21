@@ -1,0 +1,71 @@
+---
+title: Metody přesměrování (Redirect 301)
+date: 2010-02-28 09:44
+layout: article
+comments: false
+tags: [internet]
+geshifilter: false
+---
+<p>Přesměrování pomocí HTTP kódu 301 Redirect je nejefektivnější a k vyhledávačům nejpřátelštější metoda přesměrování stránek na Internetu. Navíc je velmi snadné ho aplikovat v jakémkoliv jazyce. Pokud jste přesunuli stránku a teď chcete ze staré adresy směrovat na druhou, je přesměrování 301 nejlepší volba. Kód 301 je interpretován jako "trvale přesunuto".</p>
+<p>Jen prosím změňte adresu www·nova-adresa·cz na svou adresu, kam chcete přesměrovávat.</p>
+<h2>Přesměrování pomocí .htaccess</h2>
+<p>Vytvořte soubor .htaccess a vložte do něj kód pod tímto odstavcem. Složka, v níž bude .htacces umístěn, včetně jejích podsložek budou přesměrovány na novou adresu.</p>
+<pre>
+#Options +FollowSymLinks
+RewriteEngine on
+RewriteRule (.*) http://www.nova-adresa.cz/$1 [R=301,L]
+</pre>
+<h2>ColdFusion</h2>
+<pre>
+&lt;.cfheader statuscode="301" statustext="Moved permanently"&gt;
+&lt;.cfheader name="Location" value="http://www.nova-adresa.cz"&gt;
+</pre>
+<h2>PHP</h2>
+<pre>
+&lt;?
+Header( "HTTP/1.1 301 Moved Permanently" );
+Header( "Location: http://www.nova-adresa.cz" );
+?&gt;
+</pre>
+<p>nebo (via Mike)</p>
+<pre>
+header("Location: http://www.domena.cz/", true, 301);
+</pre>
+<h2>ASP</h2>
+<pre>
+&lt;%@ Language=VBScript %&gt;
+&lt;%
+Response.Status="301 Moved Permanently"
+Response.AddHeader "Location","http://www.nova-adresa.cz/"
+%&gt;
+</pre>
+<h2>ASP .NET</h2>
+<pre>
+&lt;script runat="server"&gt;
+private void Page_Load(object sender, System.EventArgs e)
+{
+Response.Status = "301 Moved Permanently";
+Response.AddHeader("Location","http://www.nova-adresa.cz");
+}
+&lt;/script&gt;
+</pre>
+<h2>JSP (Java)</h2>
+<pre>
+&lt;%
+response.setStatus(301);
+response.setHeader( "Location", "http://www.nova-adresa.cz/" );
+response.setHeader( "Connection", "close" );
+%&gt;
+</pre>
+<h2>CGI PERL</h2>
+<pre>
+$q = new CGI;
+print $q-&gt;redirect("http://www.nova-adresa.cz");
+</pre>
+<h2>Ruby on Rails</h2>
+<pre>
+def old_action
+headers["Status"] = "301 Moved Permanently"
+redirect_to "http://www.nova-adresa.cz/"
+end
+</pre>

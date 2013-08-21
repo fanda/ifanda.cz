@@ -1,0 +1,304 @@
+---
+title: Operace nad flash prováděné za běhu aplikace v mikrokontroleru MC9S08x
+date: 2011-02-07 20:57
+layout: article
+comments: false
+tags: [it, c+cpp]
+geshifilter: true
+---
+<p>Několik funkcí v C a v Asembleru do předmětu <em>Mikroprocesorové a vestavěné systémy</em>, které implementují některé operace prováděné s pamětí flash mikrokontrolérů rodiny MC9S08 firmy Freescale. Na požádání k nim můžu zaslat i česky psané vývojové diagramy.</p>
+SPLIT
+<p><strong>POZN.:</strong> Všechny uvedené funkce předpokládají na začátku programu správně inicializovanou paměť Flash nastavením správné frekvence hodin paměti v registru FCDIV.<br>
+Funkce nejsou řádně otestované přímo na kontroléru a kód uvedený v této zprávě se může lišit od kódu v odevzdaných zdrojových souborech, protože jej často bylo nutno krátit či pro názornost jinak upravit.</p>
+<h2>Ověření prázdnosti (BlankCheck)</h2>
+<p>Funkce vykoná příkaz ověření prázdnosti nad pamětí Flash a nastaví příslušný bit stavového registru Flash jako výsledek. Hodnota tohoto bitu je předána volajícímu programu jako návratová hodnota a jedná se tak o jedinou funkci s návratovou hodnotou jinou než udávající, zda došlo k chybě či nikoliv.<br>
+Funkce nemá žádné parametry a žádné specifické počáteční podmínky pro své volání. Při operaci se sice zapisuje do bufferu paměti, ale adresa ani data nemají vliv na průběh operace.<br>
+Návratová hodnota je buď paměť je prázdná nebo paměť není prázdná nebo chyba. V jazyce symbolických instrukcí je návratová hodnota předána volajícímu programu skrze střadač.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;">byte
+BlankCheck<span class="br0">(</span><span class="kw4">void</span><span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR<span class="br0">)</span>
+      FSTAT_FACCERR <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCBEF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="sy0">*</span><span class="br0">(</span><span class="br0">(</span>word <span class="sy0">*</span><span class="br0">)</span><span class="nu12">0xDD00</span><span class="br0">)</span> <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+  FCMD <span class="sy0">=</span> mBlank<span class="sy0">;</span>
+  FSTAT_FCBEF <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  _asm NOP<span class="sy0">;</span> <span class="co1">// 4x</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR <span class="sy0">||</span> FSTAT_FPVIOL<span class="br0">)</span>
+      <span class="kw1">return</span> FAILURE<span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCCF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="kw1">return</span> FSTAT_FBLANK<span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">blank_check<span class="sy0">:</span>
+    lda    #<span class="br0">(</span>mFSTAT_FPVIOL<span class="sy0">+</span>mFSTAT_FACCERR<span class="br0">)</span>
+    sta    FSTAT
+    ldhx   #$AFBE
+    sta    <span class="nu0">0</span><span class="sy0">,</span>x
+    lda    #mBlank
+    sta    FCMD
+    lda    #mFSTAT_FCBEF
+    sta    FSTAT
+    <span class="kw1">nop</span>
+    brset  FSTAT_FACCERR<span class="sy0">,</span> FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+    brset  FSTAT_FPVIOL<span class="sy0">,</span>  FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+done<span class="sy0">:</span>
+    lda    FSTAT
+    lsla
+    bpl    done
+<span class="kw5">error</span><span class="sy0">:</span>
+    RTS</pre></div>
+<h2>Programování bytu (ByteProgram)</h2>
+<p>Funkce zapisující právě jeden byte do paměti Flash vykonáním specifického příkazu. Zápis je možný pouze do nechráněné části paměti. Také není dovoleno přepsat jakýkoliv byte paměti, aniž by zápis nepředcházelo jeho smazání k tomu určenou operací.<br>
+První ze dvou parametrů udává adresu ve Flash, kam se mají data uložit, zatímco druhým parametrem jsou právě tato data.<br>
+V asemblerovské verzi rutiny je adresa místa v paměti předána v registru H:X. Byte dat určený k zápisu je předán přes zásobník.<br>
+Návratovou hodnotou funkce je úspěšnost operace zápisu.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;">byte
+ByteProgram<span class="br0">(</span>byte<span class="sy0">*</span>addr<span class="sy0">,</span>byte data<span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR
+    FSTAT_FACCERR <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCBEF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="sy0">*</span>addr <span class="sy0">=</span> data<span class="sy0">;</span>
+  FCMD <span class="sy0">=</span> mByteProg<span class="sy0">;</span>
+  FSTAT <span class="sy0">=</span> <span class="nu12">0x80</span><span class="sy0">;</span>
+  _asm NOP<span class="sy0">;</span> <span class="co1">// 4x</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR <span class="sy0">||</span> FSTAT_FPVIOL<span class="br0">)</span>
+    <span class="kw1">return</span> FAILURE<span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCCF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="kw1">return</span> SUCCESS<span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">byte_program<span class="sy0">:</span>
+    lda    #<span class="br0">(</span>mFSTAT_FPVIOL<span class="sy0">+</span>mFSTAT_FACCERR<span class="br0">)</span>
+    sta    FSTAT
+    lda    <span class="nu0">3</span><span class="sy0">,</span><span class="kw3">SP</span>
+    sta    <span class="sy0">,</span>X
+    lda    #mByteProg
+    sta    FCMD
+    lda    #mFSTAT_FCBEF
+    sta    FSTAT
+    <span class="kw1">nop</span>
+    brset  FSTAT_FACCERR<span class="sy0">,</span> FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+    brset  FSTAT_FPVIOL<span class="sy0">,</span>  FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+done<span class="sy0">:</span>
+    lda    FSTAT
+    lsla
+    bpl    done
+<span class="kw5">error</span><span class="sy0">:</span>
+    RTS</pre></div>
+<h2>Smazání stránky (PageErase)</h2>
+<p>U kontrolérů řady MC9S08 je nejmenší možná jednotka pro operaci mazání Flash paměti jedna stránka, tedy 512 bytů. Je-li požadováno smazání jednoho bytu, není jiná možnost než smazat celou stránku, ve které se tento byte nachází. Funkce PageErase vymaže obsah stránky identifikované adresou jakéhokoli bytu, který obsahuje. Není možno smazat stránku v chráněném bloku paměti.<br>
+Parametrem funkce je adresa libovolné slabiky nacházející se ve stránce, která je určena ke smazání.<br>
+V jazyce symbolických instrukcí je adresa předána uložením do registru H:X před rozvětvením do rutiny.<br>
+Návratová hodnota udává úspěšnost operace mazání stránky.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;">byte
+PageErase<span class="br0">(</span>byte<span class="sy0">*</span>addr<span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR
+    FSTAT_FACCERR <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCBEF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="sy0">*</span>addr <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+  FCMD <span class="sy0">=</span> mPageErase<span class="sy0">;</span>
+  FSTAT_FCBEF <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  _asm NOP<span class="sy0">;</span> <span class="co1">// 4x</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR <span class="sy0">||</span> FSTAT_FPVIOL<span class="br0">)</span>
+    <span class="kw1">return</span> FAILURE<span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCCF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="kw1">return</span> SUCCESS<span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">page_erase<span class="sy0">:</span>
+    lda    #<span class="br0">(</span>mFSTAT_FPVIOL<span class="sy0">+</span>mFSTAT_FACCERR<span class="br0">)</span>
+    sta    FSTAT
+    sta    <span class="nu0">0</span><span class="sy0">,</span>X
+    clr    <span class="sy0">,</span>X
+    lda    #mPageErase
+    sta    FCMD
+    lda    #mFSTAT_FCBEF
+    sta    FSTAT
+    <span class="kw1">nop</span>
+    brset  FSTAT_FACCERR<span class="sy0">,</span> FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+    brset  FSTAT_FPVIOL<span class="sy0">,</span>  FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+done<span class="sy0">:</span>
+    lda    FSTAT
+    lsla
+    bpl    done
+<span class="kw5">error</span><span class="sy0">:</span>
+    RTS</pre></div>
+<h2>Smazání celé FLASH (MassErase)</h2>
+<p>Operace smazání celé paměti Flash.<br>
+Nejsou specifikovány žádné vstupní parametry. Součástí operace je sice také zápis do paměti, ale podobně jako u ověření prázdnosti tento zápis nijak neovlivní její obsah ani průběh operace.<br>
+Funkce vrací úspěšnost operace jako návratovou hodnotu.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;">byte
+MassErase<span class="br0">(</span><span class="kw4">void</span><span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR
+    FSTAT_FACCERR <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCBEF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="sy0">*</span><span class="br0">(</span><span class="br0">(</span>word<span class="sy0">*</span><span class="br0">)</span><span class="nu12">0xDD00</span><span class="br0">)</span> <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+  FCMD <span class="sy0">=</span> mMassErase<span class="sy0">;</span>
+  FSTAT_FCBEF <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  _asm NOP<span class="sy0">;</span> <span class="co1">// 4x</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR <span class="sy0">||</span> FSTAT_FPVIOL<span class="br0">)</span>
+    <span class="kw1">return</span> FAILURE<span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCCF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="kw1">return</span> SUCCESS<span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">mass_erase<span class="sy0">:</span>
+    lda #<span class="br0">(</span>mFSTAT_FPVIOL<span class="sy0">+</span>mFSTAT_FACCERR<span class="br0">)</span>
+    sta    FSTAT
+    ldhx   #$AFBE
+    sta    <span class="nu0">0</span><span class="sy0">,</span>X
+    lda    #mMassErase
+    sta    FCMD
+    lda    #mFSTAT_FCBEF
+    sta    FSTAT
+    <span class="kw1">nop</span>
+    brset  FSTAT_FACCERR<span class="sy0">,</span> FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+    brset  FSTAT_FPVIOL<span class="sy0">,</span>  FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+done<span class="sy0">:</span>
+    lda    FSTAT
+    lsla
+    bpl    done
+<span class="kw5">error</span><span class="sy0">:</span>
+    RTS</pre></div>
+<h2>Programování v burst režimu (BurstProgram)</h2>
+<p>Obdobně jako u ByteProgram se jedná o funkci zprostředkující zápis do paměti Flash, avšak s tím rozdílem, že je možno zapsat více bytů během jednoho volání. Zapisovaná data musí ležet v paměti za sebou. Funkce je složitější o smyčku, ve které jsou zapisovány jednotlivé byty tak, jak jdou za sebou. Počet iterací je dán parametrem length.<br>
+Funkce má tři parametry a všechny jsou předány přes zásobník (i v asembleru). Těmito parametry jsou počáteční adresa zdroje dat, počáteční adresa místa paměti Flash, kam se data mají uložit a počet zapisovaných bytů.<br>
+Návratová hodnota je stejná jako u funkce zápisu jednoho bytu, tedy úspěch či případný neúspěch operace.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;">byte
+BurstProgram<span class="br0">(</span>byte<span class="sy0">*</span>addr<span class="sy0">,</span>
+             byte<span class="sy0">*</span>data<span class="sy0">,</span>
+             word length<span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR
+    FSTAT_FACCERR <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+  <span class="kw1">do</span> <span class="br0">{</span>
+    <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCBEF<span class="br0">)</span><span class="sy0">;</span>
+    <span class="sy0">*</span>addr <span class="sy0">=</span> <span class="sy0">*</span>data<span class="sy0">++;</span>
+    FCMD <span class="sy0">=</span> mBurstProg<span class="sy0">;</span>
+    FSTAT_FCBEF <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+    _asm NOP<span class="sy0">;</span> <span class="co1">// 4x</span>
+    <span class="kw1">if</span> <span class="br0">(</span>FSTAT_FACCERR<span class="sy0">||</span>FSTAT_FPVIOL<span class="br0">)</span>
+      <span class="kw1">return</span> FAILURE<span class="sy0">;</span>
+    addr<span class="sy0">++;</span>
+  <span class="br0">}</span> <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">--</span>length<span class="br0">)</span><span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span><span class="sy0">!</span>FSTAT_FCCF<span class="br0">)</span><span class="sy0">;</span>
+  <span class="kw1">return</span> SUCCESS<span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">burst_program<span class="sy0">:</span>
+    lda    #<span class="br0">(</span>mFSTAT_FPVIOL<span class="sy0">+</span>mFSTAT_FACCERR<span class="br0">)</span>
+    sta    FSTAT
+<span class="kw1">loop</span><span class="sy0">:</span>
+    lda    FSTAT
+    <span class="kw1">and</span>    #mFSTAT_FCBEF
+    beq    <span class="kw1">loop</span>
+    ldhx   <span class="nu0">5</span><span class="sy0">,</span><span class="kw3">SP</span>
+    lda    <span class="sy0">,</span>X
+    aix    #<span class="nu0">1</span>
+    sthx   <span class="nu0">5</span><span class="sy0">,</span><span class="kw3">SP</span>
+    ldhx   <span class="nu0">3</span><span class="sy0">,</span><span class="kw3">SP</span>
+    lda    <span class="sy0">,</span>X
+    aix    #<span class="nu0">1</span>
+    sthx   <span class="nu0">3</span><span class="sy0">,</span><span class="kw3">SP</span>
+    lda    #mBurstProg
+    sta    FCMD
+    lda    #mFSTAT_FCBEF
+    sta    FSTAT
+    <span class="kw1">nop</span>
+    brset  FSTAT_FACCERR<span class="sy0">,</span> FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+    brset  FSTAT_FPVIOL<span class="sy0">,</span>  FSTAT<span class="sy0">,</span> <span class="kw5">error</span>
+    lda    <span class="nu0">7</span><span class="sy0">,</span><span class="kw3">SP</span>
+    deca
+    sta    <span class="nu0">7</span><span class="sy0">,</span><span class="kw3">SP</span>
+    <span class="kw1">cmp</span>    #<span class="nu0">0</span>
+    bne    <span class="kw1">loop</span>
+done<span class="sy0">:</span>
+    lda    FSTAT
+    lsla
+    bpl    done
+<span class="kw5">error</span><span class="sy0">:</span>
+    RTS</pre></div>
+<h2>Vypnutí zabezpečení paměti (DisengageSecurity)</h2>
+<p>Paměť Flash u kontrolérů řady MC9S08 má svou vlastní ochranu před neoprávněným přepsáním. Tato ochrana se dá vypnout pouze buď v režimu background debug nebo za běžného chodu aplikace zadáním bezpečnostního kódu. Jedná se o osmi-bytový bezpečnostní kód uložený programátorem na jistém místě v paměti. Umožňuje-li aplikace uživateli vypínat ochranu paměti Flash, musí uživatel zadat bezpečnostní kód přes nějaké vstupní rozhraní. V této implementaci funkce vypnutí ochrany je použito rozhraní SCI, které po zavolání funkce očekává jednotlivé byty bezpečnostního kódu a pokud je všech osm slabik kódu správně zadáno, je zabezpečení vypnuto až do následujícího resetu.<br>
+Funkce nepřebírá žádné parametry, ale má specifické podmínky použití. Pokud není nastaven bit KEYEN registru FOPT paměti Flash, nemůže být zabezpečení vypnuto. Dále musí být umožněn uživatelský vstup přes rozhraní SCI.<br>
+Funkce nic nevrací, proto jediným způsobem, jak programově poznat, zda je ochrana vypnuta, je kontrola bitů SEC01:SEC00 registru NVOPT, které jsou vypnutím zabezpečení automaticky nastaveny na 1:0.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;"><span class="kw4">void</span>
+DisengageSecurity<span class="br0">(</span><span class="kw4">void</span><span class="br0">)</span> <span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span>FOPT_KEYEN <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">)</span> <span class="kw1">return</span><span class="sy0">;</span>
+  _asm <span class="br0">{</span>
+    mov  <span class="co2">#$00, SCI1BDH</span>
+    mov  <span class="co2">#$34, SCI1BDL</span>
+    mov  <span class="co2">#$04, SCI1C2</span>
+  <span class="br0">}</span>
+  FCNFG_KEYACC <span class="sy0">=</span> <span class="nu12">0x1</span><span class="sy0">;</span>
+  <span class="kw1">while</span> <span class="br0">(</span>SCI1S1_RDRF <span class="sy0">!=</span> <span class="nu0">1</span><span class="br0">)</span><span class="sy0">;</span>
+  <span class="sy0">*</span><span class="br0">(</span>byte <span class="sy0">*</span><span class="br0">)</span><span class="nu12">0xFFB0</span> <span class="sy0">=</span> SDI1D<span class="sy0">;</span>
+ 
+  <span class="co1">// . . . 0xFFB1 – 0xFFB6 . . .</span>
+ 
+  <span class="kw1">while</span> <span class="br0">(</span>SCI1S1_RDRF <span class="sy0">!=</span> <span class="nu0">1</span><span class="br0">)</span><span class="sy0">;</span>
+  <span class="sy0">*</span><span class="br0">(</span>byte <span class="sy0">*</span><span class="br0">)</span><span class="nu12">0xFFB7</span> <span class="sy0">=</span> SDI1D<span class="sy0">;</span>
+  FCNFG_KEYACC <span class="sy0">=</span> <span class="nu12">0x0</span><span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">disengage_security<span class="sy0">:</span>
+  lda   NVOPT
+  <span class="kw1">and</span>   #mNVOPT_KEYEN
+  beq   <span class="kw5">error</span>
+  <span class="kw1">mov</span>   #$<span class="nu0">00</span><span class="sy0">,</span> SCI1BDH
+  <span class="kw1">mov</span>   #$<span class="nu0">34</span><span class="sy0">,</span> SCI1BDL
+  <span class="kw1">mov</span>   #$<span class="nu0">04</span><span class="sy0">,</span> SCI1C2
+ 
+  bset  FCNFG_KEYACC<span class="sy0">,</span>FCNFG
+  brclr <span class="nu0">5</span><span class="sy0">,</span>SCI1S1<span class="sy0">,*</span>
+  lda   SCI1D
+  sta   NVBACKKEY0
+<span class="co1">; . . .  NVBACKKEY1 -  NVBACKKEY6</span>
+  brclr <span class="nu0">5</span><span class="sy0">,</span>SCI1S1<span class="sy0">,*</span>
+  lda   SCI1D
+  sta   NVBACKKEY7
+  bclr  FCNFG_KEYACC<span class="sy0">,</span>FCNFG
+  RTS</pre></div>
+<h2>Ochrana bloků paměti (FlashBlockProtection)</h2>
+<p>Programátor může zabezpečit určitou část paměti Flash, avšak vždy se jedná o část paměti od určité, programátorem zadané adresy, po konec adresového prostoru (adresa FFFF). Dá se tedy určit pouze začátek chráněného bloku paměti a to adresou. Funkce tuto adresu vezme, upraví na adresu posledního nechráněného bytu, z ní vezme nejvyšších osm bitů, přičemž jejich nejnižší bit vynuluje a takto upravenou adresu uloží do registru FPROT, čímž se ochrana aktivuje.<br>
+Jako parametr do funkce vstupuje adresa začátku chráněného bloku paměti Flash.<br>
+Funkce nemá žádnou návratovou hodnotu.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;">Kód v jazyce C
+<span class="kw4">void</span>
+FlashBlockProtection<span class="br0">(</span>byte<span class="sy0">*</span>addr<span class="br0">)</span> <span class="br0">{</span>
+  byte tmp<span class="sy0">;</span>
+  <span class="sy0">--</span>addr<span class="sy0">;</span>
+  tmp<span class="sy0">=</span><span class="br0">(</span>byte<span class="br0">)</span><span class="br0">(</span><span class="br0">(</span><span class="br0">(</span>word<span class="br0">)</span>addr<span class="sy0">&amp;</span><span class="nu12">0xFE00</span><span class="br0">)</span><span class="sy0">&gt;&gt;</span><span class="nu0">8</span><span class="br0">)</span><span class="sy0">;</span>
+  FPROT <span class="sy0">=</span> tmp<span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+<div class="geshifilter"><pre class="asm geshifilter-asm" style="font-family:monospace;">flash_block_protection<span class="sy0">:</span>
+   <span class="co1">;address is in H:X register</span>
+   decx
+   pshh
+   pula
+   <span class="kw1">and</span>   #<span class="nu0">%11111110</span>
+   sta   FPROT
+   RTS</pre></div>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://forums.freescale.com">Forum Freescale</a>        </div>
+        </div>
+</div>
+</fieldset>
+

@@ -1,0 +1,63 @@
+---
+title: Etapy životního cyklu softwaru
+date: 2009-11-17 22:32
+layout: article
+comments: false
+tags: [it, vyvoj]
+---
+Poznámky ze školy k vývoji softwaru, konkrétně o jednotlivých etapách v životním cyklu softwaru.
+SPLIT
+<h2>Osnova aneb co nás čeká</h2>
+<ol>
+<li><strong>Analýza a specifikace</strong></li>
+<li>Návrh
+<ul>
+<li>Architektonický návrh</li>
+<li>Podrobný návrh</li>
+</ul>
+</li>
+<li>Implementace</li>
+<li>Testování</li>
+<li>Provoz a údržba</li>
+</ol>
+<h2>Analýza a specifikace</h2>
+<ul>
+<span style="background-color:#000000;color:#FFFFFF;"><strong>Cíle:</strong></span>
+<li>Zisk požadavků a jejich transformace do strukturovné podoby, vymezení funkcionality</li>
+<li>Studie vhodnosti - odhad zd je možné software vyvinout za daných podmínek</li>
+<li>Analýza rizik - jsme schopni vytvořit produkt v požadované době a za předpokládanou cenu?</li>
+<li>Plán akceptačního testování - jaké testy se provedou při předávání softwaru zákazníkovi</li>
+</ul>
+<ul>
+<strong><span style="background-color:#000000;color:#FFFFFF;">Požadavky nejsou vždy jen funkční. Zákazník může mít i další typy požadavků:</span></strong>
+<li>Provozní - za jakých podmínek bude aplikace pracovat, správná doba odezvy, počet uživatelů systému zaráz</li>
+<li>Systémové - stanovují například operační systém, na kterém aplikace poběží, vybavení počítače, nároky na pamět, bezpečnost atd.</li>
+<li>Na rozhraní - jaké rozhraní bude systém používat a to nejen uživatelské(<strong>U</strong>ser <strong>I</strong>nterface), ale i administrátorské apod. Rozhraní může být webové(jako www stránka), přenositelné dobře vypadající GUI...</li>
+<li>Vývojového procesu - zákazník může požadovat vývoj na určité platformě či dodržování norem vývoje.</li>
+<li>Legislativní - povinnosti ochrany osobních údajů nebo etické požadavky</li>
+</ul>
+<ul>
+<strong><span style="background-color:#000000;color:#FFFFFF;">Problémy se získáváním požadavků</span></strong>
+<li>Vyřazení - s odstupem času se mění náhled na důležitost věcí, některé požadavky důležitosti nabydou, jiné ji ztratí</li>
+<li>Zkreslení (deformace) - výklad informace může být zavádějící</li>
+<li>Zobecnění - příliš dlouhé věty se mohou zdát nepravdivé</li>
+</ul>
+<h3>Metody používané RUP</h3>
+<h4>Specifikace</h4>
+<p>RUP (Rational Unified Process) používá pro určení funkčních požadavků na systém Use Case Diagramy (Diagramy případů užití) a spolu s nimy také jednotlivé detaily případů užití.<br>
+</p>
+<h4>Analýza</h4>
+<ul>
+<strong><span style="background-color:#000000;color:#FFFFFF;">Používají se tyto typy diagramů</span></strong>
+<li>Analytické třídy - pouze identifikují entity a vztahy</li>
+<li> Objektové diagramy - zachycují konkrétní vztahy instancí tříd</li>
+<li>Analytické balíčky - návrhová dekompozice systému</li>
+<li>Diagramy interakce - vztahy tříd nebo jejich instancí</li>
+<li>Sekvenční diagramy - časová posloupnost předávání zpráv</li>
+</ul>
+<h3>Analýza dat</h3>
+<h4>Data Flow Diagram (DFD)</h4>
+<p>Na první pohled vypadá jako Use Case Diagram, ovšem jedná se o strukturální návrh zachycující také data, která proudí v jednotlivých funkcích. DFD je hiearchický návrh a může tedy zobrazovat více vrstev systému, například interakci uživatele, ale i jednotlivé funkce strukturálního programování.</p>
+<h4>Entity Relationship Diagram (ERD)</h4>
+<p>Modeluje data v klidu, tedy ta, která jsou v systému uložena když se systém nepoužívá nebo je úplně vypnut. Skládá se z entitních a vztahových množin, určitými formamy abstrakce dat. Každá entita z entitní množiny je určena atributy. Atributy jsou vlastnosti, které nás v daném kontextu entity zajímají. Každá entitní množina má speciální atribut zvaný primární klíč, který od sebe jednoznačně odlišuje entity a který je v rámci entitní množiny jedinečný. Mezi entitními množinami vznikají vztahy (unární, binární, ...), kde každá entita může figurovat 0-krát až N-krát. Potom minimální počet entit ve vztahu nazýváme <em>členstvím</em> a maximální počet entit ve vztahu <em>kardinalitou</em>.</p>
+

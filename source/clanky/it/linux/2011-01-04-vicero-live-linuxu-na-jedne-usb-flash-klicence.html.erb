@@ -1,0 +1,105 @@
+---
+title: Vícero Live Linuxů na jedné USB flash klíčence
+date: 2011-01-04 15:54
+layout: article
+comments: false
+tags: [it, linux]
+geshifilter: true
+---
+<p>Dříve bylo ve velké oblibě vypalovat si tzv. LiveCD linuxových distribucí, tedy CD, ze kterých se dá spouštět Linux bez toho, aby se nejdříve instaloval. Nyní je ještě oblíbenější dávat tyto Live distribuce na USB flashky. Ty jsou totiž nejen dostatečně velké, ale hlavně lépe přenositelné. V tomto článku ukážu, jak si na svou USB flashku dát ne jednu, ale hned několik linuxových distribucí a samozřejmě mít poté možnost si vybrat, jaká se spustí.</p>
+SPLIT
+<p>Motivace pro vytvoření takové Multi Linux USB klíčenky může být různá. Například:</p>
+<ul>
+<li>Nadbytečně velká USB klíčenka nebo případně jejich větší množství (jsou levné a v poslední době jsou častým reklamním předmětem mnoha firem).</li>
+<li>Vybírat si Linux podle potřeb hostitelského počítače (na staré počítače využiji spíš Knoppix, na novějších chci Ubuntu...). Avšak nemusí jít jenom o Linux, můžu chtít třeba FreeBSD nebo OpenSolaris. Také může rozhodovat architektura počítače.</li>
+<li>Možnost instalovat různé distribuce z jednoho média, protože Live USB je zároveň instalační médium.</li>
+<li>A v neposlední řadě s tím můžu zamachrovat před slečnou na diskotéce a tím si zajistit její přízeň, protože Multi Linux USB klíčenky mají jenom hustí geeci :D</li>
+</ul>
+<p>Na vytvoření USB flashky s více distribucemi nepotřebuji oproti vytváření jedné Live distribuce nic zvláštního. Postup není ani o nic víc těžší. Základní potřeby, které by každý předpokládal jsou:</p>
+<ul>
+<li>Počítač, kde běží Linux (nejen, že jde spustit, on už je i spuštěn - budeme pracovat v Linuxu)</li>
+<li>Dostatečně velká USB flash klíčenka (tak, aby se tam vešlo vše, co chci)</li>
+<li>ISO obrazy CD distribucí, které chci na flash médiu mít (já jsem zvolil <a href="http://www.xubuntu.cz" title="XUbuntu Linux" class="tooltip">Xubuntu</a>, <a href="www.archlinux.org" title="Arch Linux" class="tooltip">Arch Linux</a> a <a href="http://www.opensolaris.com" title="OpenSolaris" class="tooltip">OpenSolaris</a>)</li>
+</ul>
+<p>Mimochodem, pokud se Vám nechce počítač neustále restartovat a nemáte žádný jiný, hodí se i Virtuální PC, například VirtualBox.</p>
+<h2>Postup vytvoření Multi Live USB klíčenky</h2>
+<p>Zde je to hlavní - samotný postup. Většinu práce udělám v linuxovém terminálu. Nultý krok je tedy otevření terminálu v oblíbené linuxové distribuci. Další kroky jsou následující.</p>
+<h3>Nastavení USB flash disků</h3>
+<p>Po vložení klíčenky je nutné zjistit, jaké je označení disku v systému. V terminálu nejlépe získáním výpisu jádra příkazem dmesg<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">$ dmesg
+&lt;em&gt;... (výpis)&lt;/em&gt;
+[xxxx.yyyyy] sd 7:0:0:0: [sdc] Attached SCSI removable disk</pre></div>
+<br>
+Takže disk budu identifikovat jako /dev/sdc (podle [sdc] viz výše).<br>
+Rozdělení disku popíšu v terminálu, protože je to univerzálnější, ale klidně použijte jakýkoliv okenní manažer disků, kde je to možná pohodlnější.<br>
+V každém Linuxu je program fdisk, na který je ovšem nutné mít práva uživatele root. Program fdisk se ovládá vkládáním písmen, která budou pro lepší čitelnost textu uvedena tučně.
+<div style="border:3px red dotted;"><strong style="font-size:large;">Dalším postupem smažete všechna data na USB klíčence!</strong></div>
+<p>Spustím fdisk jako root.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">fdisk <span class="sy0">/</span>dev<span class="sy0">/</span>sdc</pre></div>
+<br>
+Zadám <strong>p</strong> pro výpis současných partitions, jež si představte v pořadí od 1 do N, takže na prvním řádku je partition číslo 1, na druhém je partition číslo 2 atd.<br>
+Pomocí <strong>d</strong> smažu postupně všechny partitions (můžete být vyzváni k zadání čísla partition, viz jejich výpis). Výsledkem je, že když znovu zadám <strong>p</strong>, je výpis prázdný.<br>
+<strong>n</strong> vytváří nové partitions a dále nabízí volbu <strong>p</strong> pro primární disk. Číslo diskového oddílu (partition) <strong>1</strong>, První cylindr - nic nezadám a jen potvrdím, Poslední cylindr - zadám <strong>+16M</strong>, čímž vytvořím partition o velikosti 16MB. První oddíl je tedy hotov, viz jejich výpis.<br>
+Nyní zadám <strong>a</strong>, abych označil novou partition příznakem <em>boot</em>, přičemž jsem opět vyzván k zadání Čísla diskového oddílu a zadám tedy <strong>1</strong>.<br>
+Zbývá vybrat typ, nebo chcete-li "souborový systém". Po zmáčknutí <strong>t</strong> jsem vyzván k zadání typu a je mi nabízena volba <strong>L</strong> pro výpis toho, co mohu zadat. Chci FAT16 (ano opravdu jej chci :)), tedy <strong>6</strong>. Tím je první partition hotova.<br>
+Další partition bude tzv. <em>rozšířená</em>. Jedná se o nadoddíl, kde se dají vytvářet logické partitions. Zadám nejprve <strong>n</strong>, potom <strong>e</strong> (<em>extended</em>). Číslo diskového oddílu bude <strong>2</strong> a následný první a poslední cylindr jen potvrdím, nic nezadám, čímž se <em>extended</em> vytvoří na celém zbytku USB disku.<br>
+Nyní pro každý Live Linux, který jsem na začátku vybral, musím udělat vlastní partition o velikosti, která je rovna (ale lépe trochu větší) jeho ISO obrazu. Já jsem všechny velikosti zaokrouhlil nahoru na nejbližší hezké kulaté číslo. Velikost jednotlivých ISO obrazů zjistíte příkazem <strong>ls -lh *.iso</strong>.<br>
+Další partitions vytvářím v tom nadoddílu <em>extended</em>, ale jinak se postupuje stejně jako v případě té první primární parittion, jen po stisknutí <strong>n</strong> (nový), zadám <strong>l</strong> (logický). První cylindr jako vždy jen potvrdím implicitní, poslední cylindr určím podle velikosti ISO obrazu, takže pokud má Xubuntu CD velikost 673, napíšu <strong>+680M</strong>. Toto udělám pro všechny ISO obrazy, které mám. Typ souborového systému nezadávám.<br>
+Pokud mi zbude nějaké volné místo, vytvořím volně přístupnou datovou oblast, ke které se potom dá libovolně přistupovat tak, jak jsme u USB klíčenek zvyklí.<br>
+Na konci když zadám <strong>p</strong>, dostanu následující výpis:<br>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">Zařízení Zavádět   Začátek       Konec    Bloky    Id  Systém
+/dev/sdc1   *           1          17       17104+   6  FAT16
+/dev/sdc2              18        3880     3893904    5  Rozšířený
+/dev/sdc5              18         709      697504+  83  Linux
+/dev/sdc6             710        1086      379984+  83  Linux
+/dev/sdc7            1087        1788      707584+  83  Linux
+/dev/sdc8            1789        3880     2108704+   b  W95 FAT32</pre></div>
+<br>
+Poslední příkazy fdisku jsou <strong>w</strong>(potvrzení) a <strong>q</strong> ukončení.
+<p>Výše uvedený návod můžete použít i jindy při práci s fdiskem. Postup vytváření nových diskových oddílů je vždy stejný.</p>
+<h3>Nastavení bootloaderu</h3>
+<p>Aby MULTI LIVE USB klíčenka fungovala při startu počítače, je potřeba do ní nahrát tzv. <em>bootloader</em>. Známé bootladery jsou GRUB nebo LILO, avšak pro naše účely bude lepší Gajin. Ten vložím na primární partition o velikosti 16MB, kterou jsem na USB disku vytvořil. Je potřeba ji naformátovat. Označení disku známe, já mám sd<strong>c</strong>, vy můžete mít místo <strong>c</strong>, jiné písmeno. Je potřeba na to dát pozor, aby se nesmazala žádná data.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">mkfs.msdos <span class="re5">-F</span> <span class="nu0">16</span> <span class="sy0">/</span>dev<span class="sy0">/</span>sdx1</pre></div>
+<p>Gujin je ke stáhnutí <a href="http://sourceforge.net/project/showfiles.php?group_id=15465&amp;package_id=76732&amp;release_id=574220">zde</a>. Po stáhnutí archívu jej rozbalte a vstupte do adresáře <em>install</em> (může být <em>gujin-install</em>). Následující příkaz pak udělá všechnu práci.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">.<span class="sy0">/</span>instboot boot.bin <span class="sy0">/</span>dev<span class="sy0">/</span>sdx1 <span class="re5">--disk</span>=BIOS:0x80 <span class="re5">-w</span></pre></div>
+<br>
+Pokud příkaz nefunguje, zkuste následující (díky Honzee)<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">.<span class="sy0">/</span>gujin <span class="sy0">/</span>dev<span class="sy0">/</span>sdg <span class="re5">--disk</span>=BIOS:0x00,auto</pre></div>
+<br>
+Od teď je USB flashka bootovatelná a vyzkoušet to můžete v jakémkoliv virtualizéru nebo emulátoru.
+<h3>Vložení ISO obrazů na USB flash disk</h3>
+<p>Kdo zapomněl, jaká čísla mají partitions, které vytvořil, připomene si je příkazem.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">fdisk <span class="re5">-l</span> <span class="sy0">/</span>dev<span class="sy0">/</span>sdx</pre></div>
+<br>
+Nakopírování ISO obrazů je lehké, ale je potřeba dát si pozor, aby se vybrali odpovídající si ISO a partition. Logické partitions začínají od čísla 5 (myšleno sdx<strong>5</strong>).<br>
+Samotné kopírování vypadá takto:<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;"><span class="kw2">dd</span> <span class="re2"><span class="kw1">if</span></span>=xubuntuCD.iso <span class="re2">of</span>=<span class="sy0">/</span>dev<span class="sy0">/</span>sdx5 <span class="re2">bs</span>=2M
+<span class="kw2">dd</span> <span class="re2"><span class="kw1">if</span></span>=dalšíCD.iso <span class="re2">of</span>=<span class="sy0">/</span>dev<span class="sy0">/</span>sdx6  <span class="re2">bs</span>=2M
+...
+<span class="kw2">dd</span> <span class="re2"><span class="kw1">if</span></span>=posledníCD.iso <span class="re2">of</span>=<span class="sy0">/</span>dev<span class="sy0">/</span>sdx<span class="br0">[</span>poslední<span class="br0">]</span>  <span class="re2">bs</span>=2M</pre></div>
+<p><strong>Hotovo!</strong></p>
+<p>Nezbývá než Multi USB klíčenku vyzkoušet.</p>
+<p><strong>Napište, jak se Vám návod líbí v komentáři. Chcete-li více podobných návodů, přidejte si prosím tento web do své RSS čtečky.</strong></p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://psychoticspoon.blogspot.com/2009/01/booting-multiple-livecds-from-single.html">Anglický popis, ze kterého jsem čerpal</a>        </div>
+        </div>
+</div>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/pocitace/zapomenute-heslo-roota-v-ubuntu-sudo-must-be-setuid-root">Zapomenuté heslo roota v Ubuntu</a>        </div>
+        </div>
+</div>
+</fieldset>
+

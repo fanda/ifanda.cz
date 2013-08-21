@@ -1,0 +1,48 @@
+---
+title: Přesun MySQL databáze přímo pomocí souborů na disku
+date: 2009-09-26 15:45
+layout: article
+comments: false
+tags: [it, linux]
+geshifilter: true
+---
+<p>Po několika letech používání Debianu jsem se rozhodl zkusit jinou distribuci. Nešel jsem nijak daleko a zvolil Ubuntu. Nastavení domovské složky se přeneslo automaticky a konfigurační soubory stačilo jednoduše nakopírovat na patřičné místo, ale jak přenést databáze z MySQL serveru, které používám ke svým webovým aplikacím?</p>
+SPLIT
+<p>Hned mě napadly dvě možnosti, jak databáze přenést. První možnost je restartovat zpět to Debianu a pomocí <em>mysqldump</em> vytvořit sql zálohy i s daty a pak je importovat do MySQL serveru v Ubuntu. Celé se mi to ale zdá nějaké složité, hlavně ten restart. Proto jsem zvolil druhou možnost přenosu databází a to zkopírovat přímo datové soubory MySQL serveru.</p>
+<p>Postup není těžký, ale člověk musí pamatovat na pár důležitých věcí, jako například nastavení příslušných práv nebo vypnutí MySQL serveru v průběhu kopírování dat.</p>
+<div style="border:3px red dotted;"><strong style="font-size:large;">Před kopírováním dat se musí vypnout MySQL server!</strong></div>
+<p>Vypnutí MySQL serveru provedeme v Ubuntu následujícím příkazem:<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shell<span class="sy0">&gt;</span> <span class="kw2">sudo</span> <span class="sy0">/</span>etc<span class="sy0">/</span>init.d<span class="sy0">/</span>mysql stop</pre></div>
+<p>Datové soubory databází se obvykle nacházejí ve složce <strong>/var/lib/mysql</strong>. Ale pokud si nejste jistí nebo taková složka neexistuje, podívejte se do souboru <strong>/etc/mysql/my.cnf</strong>, jakou hodnotu nabývá vlastnost <strong><em>datadir</em></strong>.</p>
+<p>Můj MySQL server má <strong><em>datadir</em></strong> opravdu nastaveno na <strong>/var/lib/mysql</strong>. Každá podsložka této složky představuje jednu databázi. </p>
+<p>Uvažujme teoretickou databázi <em>my_database</em> a v ní tabulky <em>table1</em> a <em>table2</em>. Ve složce <strong>/var/lib/mysql/my_database</strong> budou následující soubory.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shell<span class="sy0">&gt;</span> <span class="kw2">sudo</span> <span class="kw2">ls</span> <span class="re5">-l</span> <span class="sy0">/</span>var<span class="sy0">/</span>lib<span class="sy0">/</span>mysql<span class="sy0">/</span>my_database
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql   <span class="nu0">65</span> Jul <span class="nu0">21</span> <span class="nu0">20</span>:<span class="nu0">52</span> db.opt
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql <span class="nu0">8612</span> Jul <span class="nu0">21</span> <span class="nu0">21</span>:<span class="nu0">15</span> table1.frm
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql   <span class="nu0">20</span> Jul <span class="nu0">21</span> <span class="nu0">21</span>:<span class="nu0">17</span> table1.MYD
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql <span class="nu0">2048</span> Jul <span class="nu0">21</span> <span class="nu0">21</span>:<span class="nu0">20</span> table1.MYI
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql <span class="nu0">8612</span> Jul <span class="nu0">21</span> <span class="nu0">21</span>:<span class="nu0">15</span> table2.frm
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql   <span class="nu0">20</span> Jul <span class="nu0">21</span> <span class="nu0">21</span>:<span class="nu0">17</span> table2.MYD
+<span class="re5">-rw-rw----</span>  <span class="nu0">1</span> mysql mysql <span class="nu0">2048</span> Jul <span class="nu0">21</span> <span class="nu0">21</span>:<span class="nu0">20</span> table2.MYI</pre></div>
+<br>
+Jde vidět, že každá tabulka má soubory typu <em>frm</em>, <em>MYD</em> a <em>MYI</em>. Důležitější ovšem je, že jejich vlastníkem je uživatel <strong><em>mysql</em></strong> patřící do stejnojmené skupiny. Na to musím při kopírování pamatovat.
+<p>Teď už můžu jít kopírovat kopírovat. Disk s Debianem mám mountlý v <strong>/media/disk</strong>, takže skutečné datové soubory se nachází v <strong>/media/disk/var/lib/mysql</strong>. Následujícím příkazem zkopíruju soubory databáze z Debianu do Ubuntu.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shell<span class="sy0">&gt;</span> <span class="kw2">sudo</span> <span class="kw2">cp</span> <span class="re5">-R</span> <span class="sy0">/</span>media<span class="sy0">/</span>disk<span class="sy0">/</span>var<span class="sy0">/</span>lib<span class="sy0">/</span>mysql<span class="sy0">/</span>my_database <span class="sy0">/</span>var<span class="sy0">/</span>lib<span class="sy0">/</span>mysql</pre></div>
+<br>
+Ovšem kopíroval jsem jako <em>root</em> a složka i všechny její soubory jsou <em>rootem</em> vlastněny. Následující dva příkazy nastaví správného vlastníka i skupinu. Jsou dva, protože složka my_database má jinou skupinu než soubory v ní..<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shell<span class="sy0">&gt;</span> <span class="kw2">sudo</span> <span class="kw2">chown</span> <span class="re5">-R</span> mysql:mysql <span class="sy0">/</span>var<span class="sy0">/</span>lib<span class="sy0">/</span>mysql<span class="sy0">/</span>my_database
+shell<span class="sy0">&gt;</span> <span class="kw2">sudo</span> <span class="kw2">chown</span> mysql:root <span class="sy0">/</span>var<span class="sy0">/</span>lib<span class="sy0">/</span>mysql<span class="sy0">/</span>my_database</pre></div>
+<br>
+Tím jsem skoro hotov. Stačí jen nastartovat MySQL server.<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shell<span class="sy0">&gt;</span> <span class="kw2">sudo</span> <span class="sy0">/</span>etc<span class="sy0">/</span>init.d<span class="sy0">/</span>mysql start</pre></div>
+<br>
+A dále nějakým MySQL klientem zkontrolovat, jestli mám k databázím přístup. Já používám obyčejný klient <em>mysql</em>.<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shell<span class="sy0">&gt;</span> mysql <span class="re5">-u</span> root <span class="re5">-p</span>
+mysql<span class="sy0">&gt;</span> use my_database;
+mysql<span class="sy0">&gt;</span> <span class="kw1">select</span> <span class="sy0">*</span> from table1;
+           ...</pre></div>
+<p>Pokud někde nastane chyba, zkontrolujte ještě jednou všechna přístupová práva souborů. Tato metoda přesunu dat je ovšem tak jednoduchá, že by žádný problém nastat neměl.</p>
+

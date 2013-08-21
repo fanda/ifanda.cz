@@ -1,0 +1,87 @@
+---
+title: Skript na vyhledávní souborů
+date: 2009-05-22 08:22
+layout: article
+comments: false
+tags: [it, perl]
+geshifilter: true
+---
+<p>V dnešní perlovské glose implementujeme jednoduchý skript, který vyhledá všechny zadané soubory v aktuálním adresáři a ve všech jeho podadresářích. Naučíme se přitom, jak pracovat v Perlu s linuxovými příkazy, regulárními výrazy a ještě k tomu všemu použijeme rekurzi.</p>
+SPLIT
+<p>Na začátku si uložíme hledané slovo z parametru programu do globální proměnné.<br>
+</p>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="re0">$filename</span> <span class="sy0">=</span> <span class="re0">$ARGV</span><span class="br0">[</span><span class="nu0">0</span><span class="br0">]</span><span class="sy0">;</span></pre></div>
+<br>
+Běh celého programu pak vlastně obstará jediná funkce, pojmenujme ji například search. Funkce bude přebírat jeden parametr a to jméno současné složky. Název současné složky musíme nejdříve umět získat. Zde poprvé použijeme systémový příkaz, konkrétně pwd, který zjištění názvu složky provádí.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="re0">$dir</span> <span class="sy0">=</span> <span class="st0">`pwd`</span><span class="sy0">;</span></pre></div>
+<br>
+Všimněte si, že příkaz pwd je obalen zpětnými uvozovkami (na české klávesnici pravý alt + h) a že se jeho výstup jednoduše ukládá do proměnné $dir. Vše je v pořádku až na jeden detail a tím je znak konce řádku, který je součástí výstupu příkazu pwd. Musíme jej odstranit. Nabízí se použití regulárního výrazu, ale jako vždy je tu ještě lepší možnost. Perl nám nabízí speciální funkci <em>chop</em>, jež smaže poslední znak v řetězci. Použijeme ji a potom zavoláme naši vyhledávací funkci.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><a href="http://perldoc.perl.org/functions/chop.html"><span class="kw3">chop</span></a> <span class="re0">$dir</span><span class="sy0">;</span>
+search<span class="br0">(</span> <span class="re0">$dir</span> <span class="br0">)</span><span class="sy0">;</span></pre></div>
+<br>
+Nyní se podívejme, co bude funkce search vykonávat.<br>
+Nejprve si nadeklaruje své lokální proměnné, jejich význam napíšu ke každé zvlášť do komentáře.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw1">my</span> <span class="re0">@lines</span><span class="sy0">;</span>    <span class="co1"># pole všech řádků výstupu příkazu ls -l</span>
+<span class="kw1">my</span> <span class="re0">$line</span><span class="sy0">;</span>     <span class="co1"># obsahuje jednotlivé řádky z @lines v cyklu foreach</span>
+<span class="kw1">my</span> <span class="re0">$file</span><span class="sy0">;</span>     <span class="co1"># pokud byl nějaký soubor nalezen, bude uložen zde</span>
+<span class="kw1">my</span> <span class="re0">$dir</span><span class="sy0">;</span>      <span class="co1"># jméno složky učiníme lokálním, protože se bude měnit</span>
+<span class="kw1">my</span> <span class="re0">$subdir</span><span class="sy0">;</span>   <span class="co1"># jméno podsložky</span>
+<span class="re0">$dir</span> <span class="sy0">=</span> <span class="co5">$_</span><span class="br0">[</span><span class="nu0">0</span><span class="br0">]</span><span class="sy0">;</span> <span class="co1"># uložíme první parametr funkce</span></pre></div>
+<br>
+Dále je potřeba zkontrolovat, zda máme oprávnění přistupovat k obsahu adresáře. Perl nám situaci opět zjednodušuje testovacím operátorem -x (kontrola práv na spouštění).<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw1">if</span> <span class="br0">(</span> <span class="sy0">-</span>x <span class="re0">$dir</span> <span class="br0">)</span></pre></div>
+<br>
+Pokud máme dostatečná práva, zavoláme posloupnost příkazů, která nás přesune do prohlížené složky (příkaz cd), poté vypíše její obsah do tabulky (ls -l) a vybere řádky tabulky obsahující hledaný výraz. Za povšimnutí zde stojí způsob, jakým se proměnné z Perlu vkládají do systémových příkazů.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="re0">@lines</span> <span class="sy0">=</span> <span class="st0">`cd $dir; ls -l | grep $filename`</span><span class="sy0">;</span></pre></div>
+<br>
+Je-li v poli @lines něco uloženo, pak jsou to nalezené soubory. Pomocí cyklu foreach si je vypíšeme. Abychom však nevypisovali přímo řádky výstupu příkazu ls, musíme použít regulární výrazy.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw1">foreach</span> <span class="re0">$line</span> <span class="br0">(</span><span class="re0">@lines</span><span class="br0">)</span> <span class="br0">{</span>
+  <span class="br0">(</span><span class="re0">$file</span><span class="br0">)</span> <span class="sy0">=</span> <span class="re0">$line</span> <span class="sy0">=~</span> <span class="co2">/\s+(\S+)$/</span><span class="sy0">;</span>
+  <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"Found $file in $dir<span class="es0">\n</span>"</span><span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+Regulární výraz \s+(\S+)$ odpovídá vždy poslednímu slovu na řádku. \s určuje hledání bílých znaků (mezera, tabulátor, nový řádek) a \S naopak nebílých znaků.<br>
+Protože chceme hledat také ve všech podsložkách, je nutné zjistit, jaké složky se v aktuální složce nacházejí. Znovu tedy naplníme pole @lines výstupem příkazu ls -l a jednotlivé řádky budeme procházet cyklem foreach. Nyní ale budeme hledat řádky, na kterých je první písmeno malé d (directory). Jméno podsložky je opět poslední slovo na řádku, a proto můžeme použít stejný regulární výraz jako pro získání jména souboru.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="re0">@lines</span> <span class="sy0">=</span> <span class="st0">`cd $dir; ls -l`</span><span class="sy0">;</span>
+<span class="kw1">foreach</span> <span class="re0">$line</span> <span class="br0">(</span><span class="re0">@lines</span><span class="br0">)</span> <span class="br0">{</span>
+  <span class="kw1">if</span> <span class="br0">(</span> <span class="re0">$line</span> <span class="sy0">=~</span> <span class="co2">/^d/</span> <span class="br0">)</span> <span class="br0">{</span>
+  <span class="re0">$line</span> <span class="sy0">=~</span> <span class="co2">/\s+(\S+)$/</span><span class="sy0">;</span>
+  <span class="re0">$subdir</span> <span class="sy0">=</span> <span class="re0">$dir</span><span class="sy0">.</span><span class="st0">"/"</span><span class="sy0">.</span><span class="co3">$1</span><span class="sy0">;</span>
+  search<span class="br0">(</span><span class="re0">$subdir</span><span class="br0">)</span><span class="sy0">;</span> <span class="co1"># funkce rekurzívně zavolá sama sebe pro hledání v podsložkách</span>
+<span class="br0">}</span></pre></div>
+<br>
+Funkce v tomto cyklu volá sama sebe a bude v tom pokračovat, dokud bude narážet na další a další podsložky prohledávaných složek.<br>
+Skript je kompletní a nezbývá nic jiného než jej vyzkoušet. Pojmenujme si program třeba <em>hledej</em>. Pokud si skript vložíme do složky /usr/bin, můžeme jej v budoucnu odkukoliv spouštět zadáním příkazu do příkazové řádky.<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">hledej soubor</pre></div>
+<p>Kompletní kód skriptu na vyhledávání souborů si můžete prohlédnout zde.<br>
+</p>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="co1">#!/usr/bin/perl</span>
+<span class="kw1">if</span> <span class="br0">(</span><span class="re0">$#ARGV</span> <span class="sy0">!=</span> <span class="nu0">0</span><span class="br0">)</span> <span class="br0">{</span>
+  <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"usage: hledej soubor<span class="es0">\n</span>"</span><span class="sy0">;</span>
+  <a href="http://perldoc.perl.org/functions/exit.html"><span class="kw3">exit</span></a><span class="sy0">;</span>
+<span class="br0">}</span>
+<span class="re0">$filename</span> <span class="sy0">=</span> <span class="re0">$ARGV</span><span class="br0">[</span><span class="nu0">0</span><span class="br0">]</span><span class="sy0">;</span>
+<span class="re0">$dir</span> <span class="sy0">=</span> <span class="st0">`pwd`</span><span class="sy0">;</span>
+<a href="http://perldoc.perl.org/functions/chop.html"><span class="kw3">chop</span></a> <span class="re0">$dir</span><span class="sy0">;</span>
+search<span class="br0">(</span><span class="re0">$dir</span><span class="br0">)</span><span class="sy0">;</span>
+ 
+<span class="kw2">sub</span> search <span class="br0">{</span>
+  <span class="kw1">my</span><span class="br0">(</span><span class="re0">@lines</span><span class="sy0">,</span> <span class="re0">$line</span><span class="sy0">,</span> <span class="re0">$file</span><span class="sy0">,</span> <span class="re0">$dir</span><span class="sy0">,</span> <span class="re0">$subdir</span><span class="br0">)</span><span class="sy0">;</span>
+  <span class="re0">$dir</span> <span class="sy0">=</span> <span class="co5">$_</span><span class="br0">[</span><span class="nu0">0</span><span class="br0">]</span><span class="sy0">;</span>
+  <span class="kw1">if</span> <span class="br0">(</span> <span class="sy0">-</span>x <span class="re0">$dir</span> <span class="br0">)</span> <span class="br0">{</span>
+    <span class="re0">@lines</span> <span class="sy0">=</span> <span class="st0">`cd $dir; ls -l | grep $filename`</span><span class="sy0">;</span>
+    <span class="kw1">foreach</span> <span class="re0">$line</span> <span class="br0">(</span><span class="re0">@lines</span><span class="br0">)</span> <span class="br0">{</span>
+      <span class="br0">(</span><span class="re0">$file</span><span class="br0">)</span> <span class="sy0">=</span> <span class="re0">$line</span> <span class="sy0">=~</span> <span class="co2">/\s+(\S+)$/</span><span class="sy0">;</span>
+      <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"Found $file in $dir<span class="es0">\n</span>"</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="re0">@lines</span> <span class="sy0">=</span> <span class="st0">`cd $dir; ls -l`</span><span class="sy0">;</span>
+    <span class="kw1">foreach</span> <span class="re0">$line</span> <span class="br0">(</span><span class="re0">@lines</span><span class="br0">)</span> <span class="br0">{</span>
+      <span class="kw1">if</span> <span class="br0">(</span> <span class="re0">$line</span> <span class="sy0">=~</span> <span class="co2">/^d/</span> <span class="br0">)</span> <span class="br0">{</span>
+        <span class="re0">$line</span> <span class="sy0">=~</span> <span class="co2">/\s+(\S+)$/</span><span class="sy0">;</span>
+        <span class="re0">$subdir</span> <span class="sy0">=</span> <span class="re0">$dir</span><span class="sy0">.</span><span class="st0">"/"</span><span class="sy0">.</span><span class="co3">$1</span><span class="sy0">;</span>
+        search<span class="br0">(</span><span class="re0">$subdir</span><span class="br0">)</span><span class="sy0">;</span>
+      <span class="br0">}</span>
+    <span class="br0">}</span>
+  <span class="br0">}</span>
+<span class="br0">}</span></pre></div>
+

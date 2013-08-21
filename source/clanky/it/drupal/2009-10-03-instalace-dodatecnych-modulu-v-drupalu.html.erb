@@ -1,0 +1,73 @@
+---
+title: Instalace dodatečných modulů v Drupalu
+date: 2009-10-03 17:56
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: true
+---
+<p>Velká síla Drupalu spočívá v jeho rozšířitelnosti dodatečnými moduly, které jsou vytvořeny lidmy z komunity kolem Drupalu. Jádro Drupalu samo o sobě sice nabízí široké možnosti vytváření a správy obsahu, ale často je třeba sáhnout právě po dodatečných modulech třetích stran. Jak tyto moduly nainstalovat a připravit k použití je napsáno v tomto návodu.</p>
+<p><strong>Vše by se dalo shrnout do jedné věty. Z <a href="http://drupal.com" title="Drupal.org - Community plumbing">oficiální stránky Drupalu</a> stáhněte archív s modulem, rozbalte jej do složky s moduly a aktivujte v administračním rozhraní v <em>Administrace -&gt; Prvky webu -&gt; Moduly</em>. </strong></p>
+<p>
+Jelikož je zde ale pár zapeklitostí, popíši instalaci modulu v Drupalu krok za krokem a detailněji.
+</p>
+<h2>1. Stažení modulu</h2>
+<p>
+Všechny dostupné moduly je možno najít na oficiální stránce Drupalu. Je nutné si dát pozor na stažení správné verze modulu. <strong>Pokud používáte Drupal verze 6, musí mít všechny moduly označení verze 6.x</strong>. Některé moduly mají verze navíc rozdělené podle barvy. Ideální je stahovat verze v označené zeleně, tedy ty, které mají status <em>Recommended</em>. Naopak se nedoporučuje stahovat verze označené červeně a jako <em>dev</em>, protože ty jsou určeny jen pro testování, případně vývoj. U všech verzí je napsáno datum vydání a <strong>pod Download se skrývá přímý link na stažení archívu s modulem</strong>.
+</p>
+<h2>2. Rozbalení archívu</h2>
+<p>
+Všechny moduly jsou zabaleny do archívů zvaných tarball, jejichž názvy mají příponu tar.gz. Na unixových systémech bývá dekompresní program již nainstalován a grafické rozhraní obyvkle nabízí volbu pro automatické rozbalení. Případně jde použít následující příkaz shellu<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;"><span class="kw2">tar</span> <span class="re5">-zxvf</span> jmeno-modulu.tar.gz </pre></div>
+<br>
+V operačním systému Windows se dekompresní program musí doinstalovat, doporučuje se například freeware program s názvem <a href="http://www.7-zip.org/">7-zip</a>. Pro Mac OS lze podobný program stáhnout <a href="http://www.stuffit.com/mac/expander/">zde</a>.
+
+<p>
+Výsledkem dekomprimace tarballu s modulem by měl být adresář pojmenovaný jako archív, ale bez přípony.
+</p>
+<h2>3. Vložení do složky s moduly (nahrání na server)</h2>
+<p>
+Ve Vaší instalaci Drupalu se sice nachází složka <em>modules</em> hned v kořenovém adresáři, ale není doporučeno tam vkládat jiné moduly než moduly jádra, přestože i tak bude vše fungovat správně. <strong>Pro dodatečné moduly vytvořte podadresář modules adresáře <em>sites/all</em> a tam zkopírujte rozbalený modul</strong>.
+</p>
+<p>
+Takové rozdělení modulů usnadňuje následné aktualizace Drupalu.
+</p>
+<h2>4. Prostudování instalačních instrukcí</h2>
+<p>
+V adresáři dodatečného drupalovského modulu lze obvykle najít soubor INSTALL.txt nebo README.txt. V těchto textových souborech jsou většinou k nalezení instrukce nutné pro správný průběh instalace. Pokud neumíte anglicky, zkuste si je přeložit pomocí online překladače, například <a href="http://translate.google.com" title="Online překladač">Google Translate</a>.
+</p>
+<h2>5. Aktivace modulu</h2>
+<p>
+V administračním rozhraní v <em>Administrace -&gt; Prvky webu -&gt; Moduly</em> najděte požadovaný modul a zakřížkujte checkbox <em>Povoleno</em>. Poté se na této stránce přesunte úplně dole a klikněte na tlačítko <em>Uložit nastavení</em>. Modul se aktivuje a stačí jej už jen nastavit.
+</p>
+<h2>6. Nastavení modulu</h2>
+<p>
+Nastavení drupalovského modulu se může skládat z více částí. Některým modulům je potřeba nastavit uživatelská oprávnění. Nastavení oprávnění by se nemělo zanedbat, aby nevzniklo bezpečnostní riziko zneužití modulu. Definuje-li modul funkce jen pro určité uživatele, najděte v administračním rozhraní v <em>Administrace -&gt; Uživatelé -&gt; Oprávnění</em> příslunou kolonku s checkboxy pro jednotlivé uživatelské role.
+</p>
+<p>
+Vetšina modulů dále nabízí svou vlastní konfigurační stránku s možnostmi nastavení. Pokud ji nemůžete najít, podívejte se do souboru README.txt, kde by mělo být napsané, v jaké části administrátorského rozhraní se konfigurační stránka nachází.
+</p>
+<p></p>
+<p>
+A to je vše. Drupal už si sám bude hlídat aktualizace novými verzemi a bude Vás upozornovat na jejich stažení. <strong>Jen po každé aktualizaci nesmíte zapomenout na spuštění update.php skriptu.</strong></p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://drupal.org/project/modules">Stránka s moduly pro Drupal</a>        </div>
+        </div>
+</div>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/jak-se-u-komentare-ptat-na-jmeno">Jak se u komentáře ptát na jméno</a>        </div>
+              <div class="field-item even">
+                    <a href="http://ifanda.cz/clanky/drupal/dobre-moduly-pro-drupal">Dobré moduly pro drupal</a>        </div>
+        </div>
+</div>
+</fieldset>
+

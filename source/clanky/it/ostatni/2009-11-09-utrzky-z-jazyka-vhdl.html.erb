@@ -1,0 +1,92 @@
+---
+title: Útržky z jazyka VHDL
+date: 2009-11-09 11:30
+layout: article
+comments: false
+tags: [it, ostatni, pocitace]
+geshifilter: true
+---
+<p>Jako student fakulty informačních technologií často řeším nejrůznější projekty. Zpočátku jsem myslel, že mi projekt do předmětu Návrh počítačových systémů dá zabrat, protože to není zrovna moje parketa a jazyk VHDL jsem dosud moc neovládal, ale nakonec jsem byl příjemně překvapen a měl jsem z projektu dobrý pocit.</p>
+SPLIT
+<p>Nebudu se ovšem zmiňovat o proprietálním software, který je potřeba k programování ve VHDL. Program ModelSim a knihovny od společnosti Xilinx se mi na Linuxu nepodařily propojit a VHDL jsem kompiloval u kolegy. Z tohoto hlediska jsem zklamán, neboť už jenom dostat k požadovanému software licence může být heroický úkol (pro mě). Tím se zabývat nebudu. Místo toho představím 4 hardwarové komponenty v jazyce VHDL. Jinak řečeno vytrhnu čtyři součástky z projektu návrhu jednoduché střadačové architektury, ukážu jejich kód a malinko jej okomentuju. </p>
+<p>Jednoduchou střadačovou architekturou zadavatel myslel třemi instrukcemi ovládanou poloviční sčítačku, která příjímá operandy z paměti a ze střadače a výsledek ukládá zpět do střadače. Jako ovládací prvek je použit konečný automat. Ten jako jediný vynechám a představím jen RAM, multiplexor, střadač a sčítačku. Všechno uvedu jako jednotlivé procesy v činnosti jednoduché střadačové architektury. Komponenty jsou propojeny signály (dráty), které budu definovat na přeskáčku, ale mělo by jít poznat, co k čemu patří. </p>
+<h2>Sčítačka</h2>
+<p>Požadovaná sčítačka je ve VHDL zapsána velice jednoduše, ale s tím přichází i její omezení. Jelikož jsou vstupy i výstup 8-bitové a sčítačka neošetřuje přetečení, musí být hodnoty obou vstupů menší než 128. V reálné praxi by se to jistě muselo ošetřit, ale zadavatel řekl neošetřovat, takže stačí použít operátor "+" jazyka VHDL a celý proces vypadá následovně.<br>
+</p>
+<div class="geshifilter"><pre class="vhdl geshifilter-vhdl" style="font-family:monospace;">scitacka<span class="sy0">:</span> <span class="kw1">process</span><span class="br0">(</span>add_in1, add_in2<span class="br0">)</span>
+<span class="kw1">begin</span>
+    add_out <span class="sy0">&lt;=</span> add_in1 + add_in2<span class="sy0">;</span>
+<span class="kw1">end</span> <span class="kw1">process</span><span class="sy0">;</span></pre></div>
+<br>
+A signály, které jsou použity, jsou definovány jako 8-bitové.<br>
+<div class="geshifilter"><pre class="vhdl geshifilter-vhdl" style="font-family:monospace;"><span class="kw1">signal</span> add_in1, add_in2, add_out <span class="sy0">:</span> <span class="kw2">std_logic_vector</span><span class="br0">(</span><span class="nu0">7</span> <span class="kw1">downto</span> <span class="nu0">0</span><span class="br0">)</span><span class="sy0">;</span></pre></div>
+<br>
+Čekal jsem, že to bude horší, ale sčítačka ve VHDL je opravdu jednoduchá.
+<h2>Střadač</h2>
+<p>Další součástkou je registr, který uchovává svou datovou hodnotu, dokud mu neřekneme, aby uchovával jinou. Dráty na vstupu i na výstupu jsou 8-bitové a součástka je řízena třemi drátky: CLK (hodinový signál), RESET (signál pro vynulování) a WRITE (signál povolující zápis).<br>
+</p>
+<div class="geshifilter"><pre class="vhdl geshifilter-vhdl" style="font-family:monospace;"><span class="kw1">signal</span> add_in, add_out <span class="sy0">:</span> <span class="kw2">std_logic_vector</span><span class="br0">(</span><span class="nu0">7</span> <span class="kw1">downto</span> <span class="nu0">0</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="kw1">signal</span> WRITE, CLK, RESET <span class="sy0">:</span> <span class="kw2">std_logic</span><span class="sy0">;</span>
+ 
+stradac<span class="sy0">:</span> <span class="kw1">process</span><span class="br0">(</span>RESET, CLK<span class="br0">)</span>
+<span class="kw1">begin</span>
+    <span class="kw1">if</span> <span class="br0">(</span>RESET <span class="sy0">=</span> '<span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span> <span class="co1">-- vynulování</span>
+        acc_out <span class="sy0">&lt;=</span> <span class="br0">(</span><span class="kw1">others</span> <span class="sy0">=&gt;</span> '<span class="nu0">0</span>'<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">elsif</span> <span class="br0">(</span>CLK<span class="re0">'event</span><span class="br0">)</span> <span class="kw1">and</span> <span class="br0">(</span>CLK <span class="sy0">=</span> '<span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span> <span class="co1">-- zápis s náběžnou hranou</span>
+        <span class="kw1">if</span> <span class="br0">(</span>WRITE <span class="sy0">=</span> '<span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span>
+            acc_out <span class="sy0">&lt;=</span> acc_in<span class="sy0">;</span> <span class="co1">-- jednoduše uděláme ze vstupu výstup</span>
+        <span class="kw1">end</span> <span class="kw1">if</span><span class="sy0">;</span>
+    <span class="kw1">end</span> <span class="kw1">if</span><span class="sy0">;</span>
+<span class="kw1">end</span> <span class="kw1">process</span><span class="sy0">;</span></pre></div>
+<br>
+VHDL není zas tak hrozný jazyk, jak se může zdát. Selekce pomocí if-else je velmi podobná vyšším programovacím jazykům, stejně jako je ukládání hodnot signálů podobné definicím proměnných.
+<h2>Multiplexor</h2>
+<p>Součástka, která má jako vstup několik signálů a my vybereme jeden jako její výstup, se dá ve VHDL zapsat několika způsoby. Já jsem multiplexor implementoval jako další samostatný proces. Ze dvou 8-bitových vstupů dat vybereme jeden na výstup pomocí 1-bitového signálu SELECT.<br>
+</p>
+<div class="geshifilter"><pre class="vhdl geshifilter-vhdl" style="font-family:monospace;"><span class="kw1">signal</span> in1, in2, mux_out <span class="sy0">:</span> <span class="kw2">std_logic_vector</span><span class="br0">(</span><span class="nu0">7</span> <span class="kw1">downto</span> <span class="nu0">0</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="kw1">signal</span> <span class="kw1">SELECT</span> <span class="sy0">:</span> <span class="kw2">std_logic</span><span class="sy0">;</span>
+ 
+multiplexor<span class="sy0">:</span> <span class="kw1">process</span><span class="br0">(</span>in1, in2, <span class="kw1">SELECT</span><span class="br0">)</span>
+<span class="kw1">begin</span>
+    <span class="kw1">case</span> <span class="kw1">SELECT</span> <span class="kw1">is</span>
+        <span class="kw1">when</span> '<span class="nu0">0</span>'    <span class="sy0">=&gt;</span> mux_out <span class="sy0">&lt;=</span> in1<span class="sy0">;</span>
+        <span class="kw1">when</span> '<span class="nu0">1</span>'    <span class="sy0">=&gt;</span> mux_out <span class="sy0">&lt;=</span> in2<span class="sy0">;</span>
+        <span class="kw1">when</span> <span class="kw1">others</span> <span class="sy0">=&gt;</span> mux_out <span class="sy0">&lt;=</span> <span class="st0">"ZZZZZZZZ"</span><span class="sy0">;</span> <span class="co1">-- stav vysoké impedance</span>
+    <span class="kw1">end</span> <span class="kw1">case</span><span class="sy0">;</span>
+<span class="kw1">end</span> <span class="kw1">process</span><span class="sy0">;</span></pre></div>
+<br>
+Objevuje se zde další konstrukce jazyka VHDL, kterou všichni známe z vyšších programovacích jazyků. Konstrukci konečného automatu v jazyce C bychom zapsali pomocí klíčových slov <strong>switch</strong> a <strong>case</strong>. Ta jsou zde nahrazena za <strong>case</strong> a <strong>when</strong>, ale význam mají stejný.<br>
+Upozorňuji, že ve VHDL musí být uvedeno <strong>when others</strong>, jinak bude kompilátor hlásit chybu.
+<h2>RAM</h2>
+<p>Poslední komponentou je paměť. V tomto případě se jedná o RAM složenou ze čtyř 8-bitových hodnot, tedy paměť adresovatelnou dvěma bity - 2-bitovým signálem. Vstup i výstup mají stejný počet bitů jako jedna paměťová buňka a vše je řízeno čtyřmi signály. Se signály CLK a RESET jsme se setkali u střadače, avšak narozdíl od něj potřebujeme kromě zápisu řídit i čtení, a proto je zde kromě signálu WRITE i signál READ. Jsou-li READ a WRITE oba v nule, nic se neděje. Naopak předpokládáme, že WRITE i READ nebudou mít současně hodnotu 1. Jinak aktivní WRITE značí, že se do paměti zapisuje vstup a aktivní READ značí čtení z paměti na výstup.<br>
+</p>
+<div class="geshifilter"><pre class="vhdl geshifilter-vhdl" style="font-family:monospace;"><span class="kw1">type</span> mem_array <span class="kw1">is</span> array<span class="br0">(</span><span class="nu0">0</span> <span class="kw1">to</span> <span class="nu0">3</span><span class="br0">)</span> <span class="kw1">of</span> <span class="kw2">std_logic_vector</span><span class="br0">(</span><span class="nu0">7</span> <span class="kw1">downto</span> <span class="nu0">0</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="kw1">signal</span> mem <span class="sy0">:</span> mem_array<span class="sy0">;</span>
+<span class="kw1">signal</span> READ, WRITE <span class="sy0">:</span> <span class="kw2">std_logic</span><span class="sy0">;</span>
+<span class="kw1">signal</span> address <span class="sy0">:</span> <span class="kw2">std_logic_vector</span><span class="br0">(</span><span class="nu0">1</span> <span class="kw1">downto</span> <span class="nu0">0</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="kw1">signal</span> mem_in, mem_out <span class="sy0">:</span> <span class="kw2">std_logic_vector</span><span class="br0">(</span><span class="nu0">7</span> <span class="kw1">downto</span> <span class="nu0">0</span><span class="br0">)</span><span class="sy0">;</span>
+ 
+ram<span class="sy0">:</span> <span class="kw1">process</span><span class="br0">(</span>RESET, CLK<span class="br0">)</span>
+<span class="kw1">begin</span>
+    <span class="kw1">if</span> <span class="br0">(</span>RESET <span class="sy0">=</span> '<span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span> <span class="co1">-- stav vynulování</span>
+        mem_out <span class="sy0">&lt;=</span> <span class="st0">"ZZZZZZZZ"</span><span class="sy0">;</span> <span class="co1">-- vysoká impedance na výstupu</span>
+        mem<span class="br0">(</span><span class="nu0">0</span><span class="br0">)</span>  <span class="sy0">&lt;=</span> X<span class="st0">"50"</span><span class="sy0">;</span> <span class="co1">-- libovolné hodnoty v paměti</span>
+        mem<span class="br0">(</span><span class="nu0">1</span><span class="br0">)</span>  <span class="sy0">&lt;=</span> X<span class="st0">"4E"</span><span class="sy0">;</span> <span class="co1">-- X před uvozovkami vyjadřuje</span>
+        mem<span class="br0">(</span><span class="nu0">2</span><span class="br0">)</span>  <span class="sy0">&lt;=</span> X<span class="st0">"00"</span><span class="sy0">;</span> <span class="co1">-- hexadecimální hodnotu</span>
+        mem<span class="br0">(</span><span class="nu0">3</span><span class="br0">)</span>  <span class="sy0">&lt;=</span> X<span class="st0">"00"</span><span class="sy0">;</span>
+    <span class="kw1">elsif</span> <span class="br0">(</span>CLK<span class="re0">'event</span><span class="br0">)</span> <span class="kw1">and</span> <span class="br0">(</span>CLK <span class="sy0">=</span>' <span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span>
+        <span class="kw1">if</span> <span class="br0">(</span>READ <span class="sy0">=</span> '<span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span>
+            mem_out <span class="sy0">&lt;=</span> mem<span class="br0">(</span>conv_integer<span class="br0">(</span>address<span class="br0">)</span><span class="br0">)</span><span class="sy0">;</span> <span class="co1">-- výstup z RAM</span>
+        <span class="kw1">elsif</span> <span class="br0">(</span>WRITE <span class="sy0">=</span> '<span class="nu0">1</span>'<span class="br0">)</span> <span class="kw1">then</span>
+            mem<span class="br0">(</span>conv_integer<span class="br0">(</span>address<span class="br0">)</span><span class="br0">)</span> <span class="sy0">&lt;=</span> mem_in<span class="sy0">;</span> <span class="co1">-- vstup do RAM</span>
+            mem_out <span class="sy0">&lt;=</span> <span class="st0">"ZZZZZZZZ"</span><span class="sy0">;</span> <span class="co1">-- výstup je vysoká impedance</span>
+        <span class="kw1">else</span> <span class="co1">-- nedefinovany stav</span>
+            mem_out <span class="sy0">&lt;=</span> <span class="st0">"ZZZZZZZZ"</span><span class="sy0">;</span>
+        <span class="kw1">end</span> <span class="kw1">if</span><span class="sy0">;</span>
+    <span class="kw1">end</span> <span class="kw1">if</span><span class="sy0">;</span>
+<span class="kw1">end</span> <span class="kw1">process</span><span class="sy0">;</span></pre></div>
+<br>
+Za povšimnutí zde stojí vytváření pole signálů (úplně nahoře) a jeho použití (při stavu RESET). Dále je zde použita funkce <em>conv_integer</em>. Jinak se opět jedná o selekci a přiřazování signálů do signálů.
+<h2>Co z toho plyne?</h2>
+<p>Programování v jazyce VHDL není težké a je velmi podobné vyšším programovacích jazykům, od kterých se liší hlavně klíčovými slovy a tím, že nepracujeme s abstraktními proměnnými, ale s defacto fyzickými věcmi typu drát nebo hradlo, které vedou odněkud někam a které jsou jen pojmenovány jako proměnné. Aspoň tak mi to příjde po víceméně první práci s tímto zajímavým jazykem. Nebojte se jazyka VHDL!</p>
+

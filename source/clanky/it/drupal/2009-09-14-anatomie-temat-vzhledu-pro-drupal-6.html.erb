@@ -1,0 +1,38 @@
+---
+title: Anatomie témat vzhledu pro Drupal 6
+date: 2009-09-14 20:35
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: false
+---
+<p>Prezenční vrstva je jedním ze základních stavebních pilířů všech webových CMS a Drupal není výjimkou. Je tím prvním, co každý návštěvník uvidí, když vstoupí na Váš web a přesto ji hodně drupalistů zanedbává. V následujících několika článcích se pokusím přiblížit, jak v Drupalu pracovat s view vrstvou a s tématy vzhledu. Předem však chci upozornit na to, že cokoliv se zde dočtete v češtině, můžete nastudovat také v angličtině na oficiálních stránkách Drupal.org.</p>
+<h2>Témata vzhledu v Drupalu</h2>
+<p>Téma vzhledu je ve své podstatě jen kolekce souborů, které definují, jak se stránka bude zobrazovat návštěvníkům. Drupal nabízí mnoho možností, jak zobrazit obsah naší stránky. Kromě zcela nových témat vzhledu je možno vytvářet také jejich podtémata nebo variace na již vytvořená témata. <em>K vytvoření vlastního tématu vzhledu stačí jen jediný soubor</em>, soubor s příponou .info, avšak naprostá většina témat používá více než jeden soubor.<br>
+Následující obrázek hezky ilustruje strukturu a význam základních souborů zobrazovací vrstvy CMS Drupal verze 6.<br>
+<img src="http://ifanda.cz/sites/default/files/pictures/drupal/theme_anatomy_0.png" alt="Struktura prezenční vrstvy Drupalu"></p>
+<h3>Povinný soubor .info</h3>
+<p>Všechny potřebné informace o tématu vzhledu jsou napsány v tomto jediném souboru. Jsou zde uložena meta data, názvy souborů se styly a javascriptem nebo popisy regionů bloků.<br>
+Podle názvu tohoto souboru bude Drupal dále identifikovat unikátní jméno celého tématu a proto bychom se měli vyvarovat kolizi názvů souborů. </p>
+<h3>Soubory šablon .tpl.php</h3>
+<p>Většinou obsahují xHTML a značky proměnné jazyka PHP, ale mohou obsahovat i jiné typy dat, jako například xml rss. Každý takový soubor uchovává informace o určitém kousku dat, kterým můžeme změnit vzhled. Jaké stránce nebo její části budeme měnit vzhled zaleží na jméně souboru. Můžeme mít <em>page.tpl.php</em> pro všechny stránky a zároveň i třeba <em>page-node.tpl.php</em> pro bližší specifikaci stránek uzlů nebo <em>page-front.tpl.php</em> pro definování vzhledu úvodní stránky. Nemusíme však mít žádné soubory .tpl.php, čímž Drupalu řekneme, aby použil výchozí vzhled. Při úpravách bychom se měli vyvarovat složitým logickým strukturám. Pro začátek práce je nejlepší zkopírovat si výchozí soubory témat ze složky modulů jádra nebo přídavných modulů do své složky s tématem a dále je upravovat podle vlastních představ.<br>
+<em>Pozn.: Když přidáte/odděláte soubory ke svému tématu, musíte resetovat cache registrů témat, kterou si Drupal vytváří.</em></p>
+<h3>template.php</h3>
+<p>Nepovinný avšak velmi užitečný soubor, ve kterém je uložena  podmínková logika a zpracování výstupních dat. Pomáhá udržovat soubory .tpl.php štíhlé, bez zbytečného kódu, tím, že obsahuje preprocesory pro generování proměnných, které jsou záhy přeměněny na značky pro .tpl.php. Dále je tento soubor vhodným místem pro další funkce zpracovávající surový výstup z databáze. Soubor by měl začínat otevíracím tagem PHP &amp;gl?php, ale je doporučeno vynechat ukončovací tag.</p>
+<h3>Podtémata</h3>
+<p>Chovají se naprosto stejně jako jakákoliv jiná témata, avšak dědí všechny upravené soubory od svého nadtéma. Vytvářejí se uvedením direktivy <em>base-theme</em> ve svém souboru .info. Dají se dokonce vytvářet hierarchie podtémat a to tak, že se jako nadtéma uvede podtéma vyšší úrovně. Drupak tuto hierarchii nikterak nelimituje a počet úrovní podtémat je jen na tvůrci.</p>
+<h3>Logo a screenshot tématu</h3>
+<p>Nejsou naprostou nutností pro funkčnost témat vzhledu, ale jsou doporučena. Screenshoty se zobrazují na stránce administrace témat vzhledu a na stránce uživatelských účtů, pokud mají možnost měnit témata vzhledu.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/vytvareni-nastaveni-themes-soubor-info">Vytváření a nastavení themes, soubor .info</a>        </div>
+              <div class="field-item even">
+                    <a href="http://ifanda.cz/clanky/drupal/prace-s-kaskadovymi-styly-pri-tvorbe-temat-pro-drupal">Práce s kaskádovými styly při tvorbě témat pro Drupal</a>        </div>
+        </div>
+</div>
+</fieldset>
+

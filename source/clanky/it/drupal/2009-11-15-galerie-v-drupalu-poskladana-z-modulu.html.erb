@@ -1,0 +1,42 @@
+---
+title: Galerie v Drupalu poskládaná z modulů
+date: 2009-11-15 18:43
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: false
+---
+<p>Již dlouho hledám vhodný drupalovský modul na vytváření galerií obrázků. Požaduji přehlednou administraci galerie, jednoduché přidávání obrázků, modifikovatelný vzhled a možnost vytvářet bloky s dynamickými náhledy. Dokud jsem měl možnost vypnout safe mode, bylo nejlepší volbou nainstalovat Gallery2 a včlenit ji do Drupalu. Ale nyní se <em>safe mode on</em> jsem musel hledat jiné řešení galerie v Drupalu.</p>
+<p>Kdosi řekl, že <strong>Drupal je jako lego</strong> a je to pravda. Web v Drupalu se musí poskládat jako skládačka. Všechny díly jsou k dispozici a stačí jen vybrat ty správné a složit je dohromady. V tom tkví moc redakčního systému Drupal, a proto je také tak oblíbený.</p>
+<p>Já jako díly skládačky <strong>použiji moduly <abbr title="Content Construction Kit">CCK</abbr>, Views, ImageApi, ImageCache, Filefield, ImageField, Filefield_paths a Thickbox</strong>. Je jich tedy dost, ale ve skutečnosti jich budu nastavovat jen několik, protože například ImageApi poskytuje pouze funkční rozhraní pro ImageCache a stejný vztah mají i Filefield a ImageField.</p>
+<h2>Vytvoření typu obsahu Galerie</h2>
+<p>První krok skládání Drupalovských modulů je <strong>vytvoření nového typu obsahu Galerie</strong>. Jedná se o jednoduché vyplnění formuláře <strong>v administrační části Správa obsahu -&gt; Typy obsahu</strong>. Pokud chci vytvořit čistě galerii obrázků bez možnosti přidávat k ní text, musím v sekci <em>Nastavení formuláře pro odeslání</em> vynechat <em>Nadpis pole ‚obsah‘</em>. Textové pole se tak přestane zobrazovat při vytváření nové galerie. Zde se také, díky modulu Filefield_paths, dá nastavit, do jaké složky se budou obrázky ukládat. Případné nastavení ponechám Vaší fantazii, která má díky tokenům dostatek prostoru pro vyjádření. Po nastavení všech voleb uložím.</p>
+<p>Novému typu obsahu Galerie poté <strong>přidám dvě nová <abbr title="Content Construction Kit">CCK</abbr> pole</strong> (formulář manage fields). Obě budou mít <em>Type of data to store: <strong>File</strong></em> a <em>Form element to edit the data: <strong>Image</strong></em> a budou se jmenovat například <em>nahled_galerie</em> a <em>obrazek_galerie</em>.<br>
+Pole <em>nahled_galerie</em> může mít pouze jeden obrázek a bude to ten, který se bude zobrazovat ve výběru jednotlivých galerií. Druhé pole <em>obrazek_galerie</em> bude mít naopak možnost přidat neomezeně mnoho obrázků, bude nositelem všech obrázků galerie.</p>
+<h2>Vytvoření ImageCache presetů a Thickbox</h2>
+<p>Druhý krok je nastavení velikosti obrázků v náhledu a v plné velikosti. K tomu výborně poslouží modul ImageCache.<br>
+Vytvořím si <strong>dva ImageCache presety, jeden pro náhled a druhý pro plné zobrazení obrázku</strong>. Velikost a způsob úpravy obrázku jsou čistě na Vás. Osobně preferuji použití akce <em>Scale</em> a velikosti náhledů 160x160 pixelů a obrázky o velikosti 600x600 pixelů v plném zobrazení.</p>
+<p>Dále nastavuji modul Thickbox. Zde se jedná o jednoduchý <strong>výběr presetu, který bude Thickbox načítat</strong> jako plné zobrazení obrázku. Je také vhodné vybrat <strong>seskupení obrázků <em>Per post</em> pro typ obsahu Galerie</strong>.</p>
+<h2>Návrat k nastavení typu obsahu Galerie</h2>
+<p>Za třetí se vrátím zpět do možností typů obsahu a <strong>u svého typu obsahu Galerie vstoupím</strong> do formuláře <strong>display fields</strong>. U obou polí schovám popisy (&lt;hidden&gt;). Pole nahled_galerie chci v <em>teaseru</em> zobrazit jako <em>[jméno presetu náhledu] linked to node</em> a v plném zobrazení jej nechci, a proto zaškrtnu <em>exclude</em>. Pole obrazek_galerie zase nechci v <em>teaseru</em> (opět zaškrtnu <em>exclude</em>) a u zobrazní uzlu vyberu <em>Thickbox: [jméno presetu náhledu] image</em>.</p>
+<p>Nyní už je galerie vytvořena. Nic víc by se nemuselo nastavovat. Přesto mám velice funkční galerii, kde můžu libovolně vybírat obrázek náhledu, přeskupovat pořadí obrázků, přidávat a odebírat obrázky z galerie nebo k nim psát libovolné titulky, pokud jsem si je přednastavil jako volitelné. Avšak co když chci ještě upravit celkový vzhled galerie pomocí CSS?</p>
+<h2>Vzhled galerie a uspořádání pomocí Views</h2>
+<p>V nadpisu tohoto odstavce jsou uvedeny dvě rozdílné věci. Jednou z nich je úprava vzhledu jednotlivých galerií a druhou z nich je uspořádání a zobrazení výběru těchto galerií.</p>
+<p>Vzhled galerie upravuji jako jakýkoliv jiný typ obsahu vytvořením souboru <em>node-galerie.tpl.php</em> ve svém tématu vzhledu. Popis těchto úprav je nad rámec tohoto článku a čtenáře odkazuji na tématické články na těchto stránkách, kde se o stylování dozví bližší informace.</p>
+<p>Podobně i stylování samotného výběru galerií by mělo být podrobněji popsáno ve stejných tématických článcích o tvorbě vzhledu v Drupalu. Nutno však podotknout, že úlohu <strong>uspořádání a zobrazení náhledů jednotlivých galerií nejlépe vyřešíte pomocí modulu Views</strong>. Nastavení Views pro galerie je stejné jako nastavení Views pro jakýkoliv jiný typ obsahu a pokud nyní nevíte, jestli Views dokážete správně nastavit, je vhodné si předtím přečíst nějaký tutoriál. </p>
+<p>Nyní doufám, že Vám výše uvedená galerie ušetří další víceméně marné hledání ideálního modulu pro správu galerií v Drupalu. Mě její funkčnost naprosto vyhovuje a to právě díky tomu, že stále pracuji se starými známými moduly jako jsou <abbr title="Content Construction Kit">CCK</abbr>, ImageCache nebo Views.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/dobre-moduly-pro-drupal">Dobré moduly pro drupal</a>        </div>
+              <div class="field-item even">
+                    <a href="http://ifanda.cz/clanky/drupal/instalace-dodatecnych-modulu-v-drupalu">Instalace dodatečných modulů v Drupalu</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/zajimave-moduly-pro-drupal-na-mem-blogu">Zajímavé moduly pro Drupal na mém blogu</a>        </div>
+        </div>
+</div>
+</fieldset>
+

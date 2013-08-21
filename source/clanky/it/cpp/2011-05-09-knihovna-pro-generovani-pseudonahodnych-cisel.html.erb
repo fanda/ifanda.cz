@@ -1,0 +1,161 @@
+---
+title: Knihovna pro generování pseudonáhodných čísel
+date: 2011-05-09 22:25
+comments: false
+tags: [it, c+cpp]
+geshifilter: false
+---
+<p>Při simulacích se často používají náhodné jevy či procesy, neboť některé části modelů jsou neurčité nebo je neumíme popsat jinak. Jedná se například o popisy příchodů (např. zákazníků) v systémech hromadné obsluhy, výskytu poruch nebo katastrof, určení doby obsluhy či doby životnosti nějakého zařízení. Především pro tvorbu simulačních modelů je tedy potřeba nástroj, který v průběhu simulace zajistí požadovanou náhodnost a to pokud možno rychle a přesně. Právě takovým nástrojem je zde dokumentovaná <a href="https://github.com/fanda/Pseudorandom-numbers-generator-library">knihovna pro generování pseudonáhodných čísel</a> nabízející tvůrci simulačního modelu na výběr z několika rozložení pravděpodobnosti výskytu žádané náhody.</p>
+SPLIT
+<p>Generátor pseudonáhodných čísel je program, jehož výstupem je deterministicky a efektivně určená posloupnost čísel taková, že je statisticky k nerozeznání od náhodné posloupnosti čísel [wiki]. Cílem této knihovny je vytvořit implementaci generátoru pseudonáhodných čísel, takže bude snadno použitelná v simulačních modelech nebo jiných náhodnost požadujících programech.</p>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'] ],
+      displayMath: [ ['$$','$$'] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/1.1-latest/MathJax.js"></script><h3>Zdroje faktů</h3>
+<p>Problematika generování náhodnosti je poměrně dobře popsána a to jak samotné generování pseudonáhodných čísel v rovnoměrném rozložení, tak také transformace z rovnoměrného rozložení do jiných žádaných rozložení.</p>
+<p>Co se týče generování pseudonáhodných čísel, byly díky použitému generátoru s názvem Mersenne Twister hlavním zdrojem informací odborný článek <em>Mersenne Twister: A 623-dimensionally equidistributed uniform pseudorandom number generator</em> [Matsumoto] a osobní stránka jeho tvůrce, profesora Makoto Matsumota [Matsumoto2].</p>
+<p>Transformace mezi pravděpodobnostními rozloženími si vyžádaly více faktických zdrojů, ovšem tím stěžejním byla kniha <em>Numerical Recipes</em> [NR], která k tématu poskytla obsáhlé, ba až vyčerpávající informace. V některých případech bylo nahlédnuto do odborných vědeckých článků, na něž bude ve vhodnou dobu upozorněno.</p>
+<h2>Rozbor tématu a použitých metod</h2>
+<p>Jak už mohlo vyplynout z úvodu, dá se knihovna dekomponovat na dva dílčí podproblémy. Jedním z nich je generování pseudonáhodných čísel v rovnoměrném rozdělení pravděpodobnosti, druhým pak transformace rovnoměrného rozdělení pravděpodobnosti na jiná rozdělení. Zmíněnou dekompozici bude sledovat i struktura této kapitoly.</p>
+<h3>Generování čísel v rovnoměrném rozdělení</h3>
+<p>V teorii modelování na simulací se normalizované rovnoměrné rozdělení bere jako základ pro generování dalších rozdělení. Dobrá knihovna pro generování pseudonáhodných čísel by tedy měla implementovat zvláště dobře právě generátor pro toto rozdělení, protože na něm závisí i kvalita čísel vygenerovaných pomocí jiných rozdělení pravděpodobnosti. Přitom <em>zvláště dobře</em> implementovaný (či navrhnutý) zde znamená rychlý, s co nejdelší periodou (počet čísel, po kterých se posloupnost začne opakovat) a se statisticky nezávisle generovanou posloupností.</p>
+<p>Algoritmů pro generování pseudonáhodných čísel v rovnoměrném rozdělení je celá řada, avšak ne všechny mají <em>zvláště dobré</em> vlastnosti. V souvislosti se <em>zvláště dobrými</em> algoritmy se v poslední dekádě mluví především o algoritmu Mersenne Twister, známým též jako MT19937 [Matsumoto], který nejenže má velmi velkou periodu 2<sup>19937 – 1</sup>, ale je také velmi rychlý a to i v porovnání s výpočetně jednoduchým lineárně kongruentním generátorem (oproti němu je však paměťově náročnější) [Matsumoto]. Přes jistou nevýhodu, kterou je jeho nepoužitelnost pro kryptografické účely (pokud získáme posloupnost určité délky, můžeme odvodit zbytek) [Matsumoto], byl tento algoritmus vybrán, neboť knihovna najde své použití spíše při tvorbě simulačních modelů, kde zmíněný nedostatek nevadí.</p>
+<p>Jako alternativa k algoritmu Mersenne Twister se nabízel algoritmus <em>Complimentary-multiply-with-carry</em>, od výzkumníka na poli generátorů pseudonáhodných čísel George Marsaglii (též autor tzv. Diehard testů). Jeho algoritmus má větší periodu (2<sup>131086</sup>), je rychlejší, ale paměťově náročnější [jomasm]. Přestože byl vybrán Mersenne Twister (pro lepší dohledatelnost a větší známost), knihovnu lze jednoduše přizpůsobit i pro CMWC algoritmus, o čemž je pojednáno dále.</p>
+<h3>Transformace rovnoměrného rozdělení na jiná rozdělení</h3>
+<p>Rozdělení, která knihovna podporuje, jsou následující: rovnoměrné, exponenciální, normální, Weibullovo, Poissonovo a  gamma. Pro různá rozdělení byly použity různé metody transformace z výchozího rovnoměrného rozložení.</p>
+<h4>Metoda inverzní transformace</h4>
+<p>Inverzní transformace je způsob, jímž se dají náhodná čísla generovat přesně v daném rozdělení [IMS2]. Metoda vychází z funkce inverzní k distribuční funkci požadovaného rozdělení, což však znemožňuje použitelnost této metody pro rozdělení, jejichž distribuční funkce buď nemají inverzní funkci nebo je tato inverzní funkce nevyjádřitelná elementárními funkcemi [IMS2].</p>
+<p>V knihovně je metoda inverzní transformace použita pro rovnoměrné, exponenciální a Weibullovo rozdělení. Všechna rozdělení mají poměrně jednoduše vyjádřitelnou inverzní funkci k distribuční funkci. Podoba použitých inverzních funkcí daných rozdělení je uvedena dále.</p>
+<h4>Metoda Ratio-of-Uniforms</h4>
+<p>Pro některá rozdělení pravděpodobnosti existuje více způsobů transformace z rovnoměrného rozdělení, avšak ne všechny tyto způsoby jsou dostatečně efektivní. Kinderman a Monahan vytvořili kombinovanou transformační metodu, která je poměrně efektivní, přestože není implementačně složitá [KM]. Metoda Ratio-of-Uniforms (česky snad „poměr rovnoměrných“) vychází z metody vylučovací, ze které přebírá princip nacházení takových dvou náhodných rovnoměrně rozdělených čísel, že leží uvnitř specifického dvourozměrného tvaru. Z těchto dvou čísel je pak náhodné číslo cílového rozdělení vytvořeno výpočtem poměru původních dvou [NR]. Důkaz platnosti metody je podán v [KM] i [NR]. Metoda byla použita pro generování náhodných čísel v normálním a v Poissonově rozdělení.</p>
+<p>Co se týče normálního (Gaussova) rozdělení, byla použita implementace algoritmu, který vytvořil a v článku <em>A Fast Normal Random Number Generator</em> publikoval Joseph L. Leva [Leva]. Ten výpočetně optimalizoval metodu Ratio-of-Uniforms tak, že minimalizoval potřebný počet výpočtů logaritmu, přičemž nabízí i srovnání s dalšími algoritmy [Leva]. Algoritmus od Leva je přesný a rychlý, takže při výběru metody nevzniklo žádné dilema. Alternativně by mohla být použita jedna z variant Box-Miller transformační metody.</p>
+<p>Poissonovo rozdělení je jediné diskrétní rozdělení v dokumentované knihovně. Kniha [NR] navrhuje a knihovna pro generování pseudonáhodných čísek implementuje dva způsoby generování čísel v Poissonově rozdělení, které se používají v závislosti na střední hodnotě rozdělení. První metodou je zmíněná Ratio-of-Uniforms s řadou výpočetních optimalizací, druhou pak metoda násobící (Multiplication Method) [AD], kterou jako první popsal Donald Knuth ve svém díle <em>The Art of Computer Programming</em>, ale která je použitelná pouze pro nízké střední hodnoty $\lambda$ (pro ně je výpočet efektivní). Nutno zmínit, že v článku [AD] je nabízena řada dalších alternativních metod pro výpočet včetně jejich srovnání, z něhož vyplývá, že Knuthova metoda je výhodná jen pro střední hodnoty nepřesahující hodnotu 5 [AD]. Bohužel se zde nevyskytuje srovnání s metodou Ratio-of-Uniforms, avšak ta by dle [NR] měla být rychlá i pro velmi velké střední hodnoty.</p>
+<h4>Vylučovací metoda</h4>
+<p>Vylepšená verze vylučovací metody, jak ji navrhli Marsaglia a Tsang v [Marsaglia] je použita pro generování gamma rozdělení. Základní princip metody spočívá ve vygenerování dvojice náhodných čísel v rovnoměrném rozdělení a testování zda vyhovují funkci hustoty cílového rozdělení. Pro gamma rozdělení je metoda upravena, přičemž více podrobností je uvedeno dále.</p>
+<h2>Koncepce a analýza</h2>
+<h3>Návrh programu</h3>
+<p>Knihovna pro generování pseudonáhodných čísel využívá objektově orientovaný přístup ve svém návrhu (a posléze i v implementaci). Stanoveným cílem knihovny je dát uživateli možnost vytvořit jeden objekt, který umí generovat náhodnost všech rozdělení, a pokryje pro tyto účely potřeby daného lokálního prostoru, kde bude objekt moci až do svého zničení neustále poskytovat správná čísla. Uživateli však musí být umožněno vytvářet libovolný počet generátorů a to se stejnými i různými inicializačními hodnotami. Pokud bude uživatel knihovny chtít změnit základní generátor čísel v rovnoměrném rozdělení, musí být tato změna pro něj co nejméně náročná.</p>
+<p>Ke splnění uvedených požadavků postačuje použití základních objektově orientovaných principů jako jednoduchá dědičnost a zapouzdření. Obrázek 1 zobrazuje, jak jednoduchá je struktura knihovny pro generování pseudonáhodných čísel. Dvě třídy ve vztahu rodič – potomek, kde rodič je libovolný generátor pseudonáhodných čísel v rovnoměrném rozdělení a potomek generátor rozdělení z něho transformovaných. Použitá dědičnost je jednoduchá, použitá k účelu snadné záměny rodiče bez nutnosti změn v potomku a všude využívá volání metod časnou vazbou.</p>
+<p><img src="/sites/default/files/Diagram1.png" alt="diagram1"></p>
+<h3>Analýza rozdělení</h3>
+<p>Nyní budou podrobněji rozebrána jednotlivá rozdělení pravděpodobnosti. Popis každého z nich zahrnuje informace obecného rázu, způsob značení, jak se může objevit v literatuře nebo v abstraktním modelu a příklady využití rozdělení v oblasti modelování a simulací. K tomu jsou uvedeny konkrétní postupy výpočtů tak, jak je implementuje knihovna.</p>
+<h4>Rovnoměrné rozdělení</h4>
+<p>Rovnoměrné rozdělení je takové rozdělení, kdy náhodná veličina X nabývá se stejnou pravděpodobností, jakoukoliv hodnotu z intervalu &lt;a, b&gt;. Pokud jsou hodnoty $a = 0$ a $b = 1$, mluvíme o normované formě rovnoměrného rozdělení a takové rozdělení je základem pro generování dalších rozdělení. Rozdělení můžeme vyjádřit diskrétně i spojitě, avšak zde uvažujeme pouze vyjádření spojité.</p>
+<p>Označení: $R(a,b)$ nebo $Uniform(a,b)$.</p>
+<p>V modelování a simulacích je toto rozdělení důležité zejména z hlediska generování náhodných čísel, která jsou dále transformována na jiná rozložení. Při modelování se použije například pro doby čekání nebo doby různých činností.</p>
+<p>Rovnoměrné rozdělení poskytuje knihovna jako výchozí rozdělení, avšak v normalizované podobě. Pro zobecněnou formu je potřeba použít nějakou transformační metodu, jíž se nabízí metoda inverzní transformace. Distribuční funkce rovnoměrného rozdělení v intervalu &lt;a, b&gt; je $$F(x) = \frac{(x-a)}{(b-a)}$$ Vyjdeme-li ze vztahu $$u = F(x), u \in Uniform(0, 1)$$pak $$u = \frac{(x-a)}{(b-a)}$$ a po jednoduché úpravě dostaneme $x = a + u * (b-a)$, což je výsledná inverzní funkce $$x=F^{-1}(u)$$ Jinými slovy máme-li náhodné číslo $u \in &lt; 0, 1 &gt; $, potom funkce $x=F^{-1}(u)$ jej převede na náhodné číslo $x \in &lt; a, b &gt; $.</p>
+<h4>Normální rozdělení</h4>
+<p>Normální (též Gaussovo) rozdělení je nejdůležitějším spojitým rozdělením [INM]. Využívá se ve statistice (chyby měření) a při aproximaci mnoha jiných, spojitých i diskrétních, rozdělení. Množství náhodných veličin v různých odvětvích vědy a techniky má normální rozdělení. Graf hustoty pravděpodobnosti tohoto rozdělení nese vlastní název Gaussova křivka; ta je specifická tím, že je souměrná podle osy $x \equiv \mu$ a v bodě $x = \mu$ má maximum.</p>
+<p>Jeho parametry jsou též jeho charakteristikami, přičemž střední hodnota  $E(X) = \mu$ a rozptyl $D(X) = \sigma^2$.</p>
+<p>Podobně jako u rovnoměrného rozdělení, pokud parametry nabývají hodnot $\mu = 0$ a $\sigma=1$, mluvíme o normované (též standardizované) formě normálního rozdělení. [INM]</p>
+<p>Označení: $N(\mu, \sigma)$</p>
+<p>Existuje velká řada jevů (např. jevy s vlivem většího počtu nezávislých faktorů), které odpovídají normálnímu rozdělení, takže se v simulacích jedná o poměrně častě využívané rozdělení. Také se může vyskytnout při použití metody Monte Carlo nebo při vyhodnocování výsledků simulací.</p>
+<p>Pro výpočet normálního rozdělení je v knihovně použita transformační metoda Ratio-of-Uniforms, jejíž princip byl nastíněn v přecházející kapitole. Několikastránkový popis celého algoritmu je napsán v článku [Leva], kam odkazujeme zájemce o něj.</p>
+<h4>Exponenciální rozdělení</h4>
+<p>Exponenciální rozdělení je spojité rozdělení modelující situace, kdy opakovaně a nezávisle dochází k výskytu náhodné události a zároveň nenastane více těchto situací najednou [INM]. Rozdělení má vhodné vlastnosti pro upotřebení v teorii spolehlivosti [IASTAT].</p>
+<p>Střední hodnota $E(X) = \frac{1}{\lambda}$ rozptyl $D(X)  =\frac{1}{\lambda^2}$.</p>
+<p>Označení: $E(\lambda)$ nebo $Exp(\lambda)$ [INM].</p>
+<p>Jedná se o velmi významné rozdělení pro modelování a simulace. V systémech hromadné obsluhy je  obvykle využité pro doby mezi příchody do front či pro doby čekání ve frontách. Používá se pro modelování doby čekání na výskyt nějakého jevu, takže dobře popisuje například dobu života zařízení, u kterého dochází k poruše ze zcela náhodných příčin (nikoliv z důsledků opotřebení) [IASTAT].</p>
+<p>Protože existuje inverzní funkce k distribuční funkci exponenciálního rozdělení a je vyjádřitelná pomocí elementárních matematických funkcí, můžeme ji použít pro transformaci z rovnoměrného rozdělení. Distribuční funkce je</p>
+<p>$$<br>
+{F(x)} = \left\{<br>
+\begin{array}{ll}<br>
+ 1 - e ^{-\lambda x} &amp; \quad\text{pro } x \geq 0  \\<br>
+ 0 &amp; \quad\text{pro } x &lt; 0<br>
+\end{array}<br>
+\right.<br>
+$$</p>
+<p>Řekněme, že $u \in Uniform(0,1)$ a $u = F(x)$. Potom po úpravě<br>
+$$-\lambda x = ln(1-u)$$<br>
+$$x = -\frac {ln(1-u)}{\lambda}$$<br>
+Můžeme však ušetřit jedno odečítání, protože $$(1-u) \in Uniform(0,1)$$ stejně jako $$u \in Uniform(0,1)$$ takže výsledná funkce transformující normalizované rovnoměrné rozdělení na exponenciální je<br>
+$$x = -\frac{ln(u)}{\lambda}$$</p>
+<p>POZN.: Knihovna pro generování pseudonáhodných čísel i tento dokument používá jako parametr exponenciálního rozdělení hodnotu $\lambda$, avšak někdy se exponenciální rozdělení definuje parametrem $\delta = \frac{1}{\lambda}$, tedy svou střední hodnotou.</p>
+<h4>Weibullovo rozdělení</h4>
+<p>Weibullovo rozdělení popisuje takovou náhodnou veličinu X, která vyjadřuje čekání na událost, jež se může může dostavit s šancí úměrnou mocninné funkci dosud pročekané doby. Používá se všude tam, kde nevyhovuje „rozdělení bez paměti“, tedy exponenciální [IASTAT] [HOMEN]. V praxi se jedná o zařízení, kde se projevuje mechanické opotřebení nebo únava materiálu [HOMEN]. Toto spojité rozložení má dva kladné parametry, které se nazývají měřítko a tvar (forma) [Toupal] [INM]. Pokud je tvar $&gt;$ 1, je charakterizováno zařízení, u kterého se pravděpodobnost poruchy zvyšuje, naopak pro tvar $&lt;$ 1 se pravděpodobnost poruchy snižuje. Je-li tvar = 1, jedná se o exponenciální rozdělení [Toupal].</p>
+<p>Označení: $W(tvar, měřítko)$, $Wb(tvar, měřítko)$ nebo $Weibull(tvar, měřítko)$.</p>
+<p>Při modelování spolehlivosti či selhání například výrobního zařízení se uplatní Weibullovo rozdělení před exponenciálním. Díky simulacím pak lze usnadnit rozhodování, zda se má modelované zařízení nahradit dříve než selže. Dle [Toupal] se využívá i k prezentování výrobních a dodacích časů v průmyslu nebo k předpovědím počasí.</p>
+<p>Distribuční funkce Weibullova a exponenciálního rozdělení si jsou dost podobné, neboť Weibullovo rozdělení je (jistým způsobem) zobecněné exponenciální rozdělení [NR]. Podobné je i odvození inverzní funkce k distribuční funkci, která je definována jako $$F(x) = 1 – e^{-(\frac{x}{\beta})^{\alpha}},$$ kde $\beta$ je měřítko a $\alpha$ je tvar.</p>
+<p>Řekněme, že $u \in Uniform(0,1)$ a $u = F(x)$, takže po úpravách získáme nejprve<br>
+$$\left(\frac{x}{\beta}\right)^\alpha = -ln(1-u)$$<br>
+a poté<br>
+$$x = \beta *^{\frac{1}{\alpha}}.$$<br>
+Podobně jako bylo odstraněno odčítání v argumentu logaritmu u exponenciálního rozdělení, jde odstranit i zde.</p>
+<h4>Gamma rozdělení</h4>
+<p>Spojité rozdělení, které podobně jako rozdělení Weibullovo má dva parametry pojmenované tvar a měřítko. Odpovídá době čekání na n-tou událost, kde n je parametr tvar. Pro celočíselný tvar přechází na Erlangovo rozdělení [Wiki2], pro tvar = 1 se stává exponenciálním rozdělením [Wgamma]. V kombinaci s Poissonovým rozdělením tvoří negativní binomické rozdělení. Využití tohoto rozdělení najdeme (kromě modelování a simulací) ve statistice a meteorologii. [Wiki2]</p>
+<p>Označení: $Gamma(k, \Pi)$ nebo $\Gamma(k,  \Pi)$.</p>
+<p>Využití v simulacích je možné pro modely života (umírání) [Wgamma] [Wiki2] nebo také tam, kde nachází uplatnění Erlangovo rozdělení, tedy modelování příchodů, dob čekání nebo u compartment models (česky snad „členěné modely“).</p>
+<p>V [NR] jsou uvedené dvě metody transformace a to pro pro různé hodnoty parametru k (tvar). Pro $k &lt; 1$ je využito vztahu $$y*u^{\frac{1}{k}} \sim \Gamma(k, 1), \text{kde}  y \sim \Gamma(k+1, 1) \text{ a  u } \sim Uniform(0, 1) \text{[NR]}.$$ Pro $k &gt; 1$ je použita upravená verze vylučovací metody, kterou vytvořili Marsaglia a Tsang a která využívá Gaussovu křivku, takže její rychlost závisí na rychlosti počítání nejen rovnoměrného ale i normálního rozdělení. Jelikož je metoda poměrně složitá a její výklad by zabral několikero stran, uvádíme pouze informační zdroj, jímž je [Marsaglia].</p>
+<h4>Poissonovo rozdělení</h4>
+<p>Poissonovo rozdělení je jediné diskrétní rozdělení v knihovně pro generování pseudonáhodných čísel. Úzce souvisí s exponenciálním rozdělením, které popisuje dobu mezi dvěma událostmi, zatímco Poissonovo počet výskytů události za určitou dobu [INM]. Použijeme-li parametr rozdělení $\lambda$, který zároveň představuje střední hodnotu i rozptyl, můžeme tvrdit, že k výskytu události dochází průměrně jednou za $\frac{1}{\lambda}$ časových jednotek, tj. $\lambda$-krát za jednu časovou jednotku [INM]. Pomocí Poissonova rozdělení jde za určitých podmínek aproximovat binomické rozdělení [INM] a existuje také vztah pro převod na rozdělení exponenciální.</p>
+<p>Označení: $P(\lambda)$ nebo $Poisson(\lambda)$</p>
+<p>Poissonovo rozdělení je pro modelování a simulace důležité podobně jako jeho exponenciální protějšek. Modeluje se s ním počet příchodů za jednotku času v systémech hromadné obsluhy nebo obecně počty jakýchkoliv jevů vyskytujících se v určitém časovém kvantu.</p>
+<p>Stejně jako u normálního rozdělení je pro transformaci z rovnoměrného do Poissonova rozdělení použita metoda Ratio-of-Uniforms, která je tedy evidentně použitelná i pro diskrétní rozdělení. Trik převodu reálných hodnot, které jsou umístěné uvnitř metodou žádaného planárního útvaru, na hodnoty diskrétní spočívá v jednoduchém ořezání desetinné části [NR]. Pro další detaily však musí zájemce prostudovat principy metody Ratio-of-Uniforms v knize [NR], protože zde není dostatek prostoru tuto metodu vysvětlovat.</p>
+<h2>Architektura knihovny</h2>
+<p>Jak již bylo řečeno návrh knihovny využívá objektově orientované paradigma, které se přirozeně promítne také do implementace, pro níž byl vybrán jazyk C++, který toto paradigma podporuje. C++ je rychlý kompilovaný přenositelný jazyk, jenž navíc nabízí techniky generického programování, neboli v terminologii jazyka šablony. Struktura dědičnosti tříd tak, jak byla definována v návrhu je v implementaci rozšířena o čistě virtuální třídu <em>AbstractUniformGenerator</em>, která definuje rozhraní pro základní generátor náhodných čísel v rovnoměrném rozdělení, řekněme třeba <em>UniformGenerator</em>. Jeho potomkem je pak šablona třídy <em>RandomGenerator</em>, jejímž parametrem je právě onen generátor náhodnosti s rovnoměrným rozdělením, což uživateli umožňuje změnu základního generátoru při vytváření instance třídy <em>RandomGenerator za jakýkoliv jiný generátor bez nutnosti zasahovat do kódu knihovny. Jedinou podmínkou je, že uživatelův <em>UniformGenerator</em> bude mít stejný protokol jako <em>AbstractUniformGenerator</em> tedy jinak řečeno, bude jeho potomkem. Dědičnosti tříd je znázorněna na obrázku diagram2.</em></p>
+<p><img src="/sites/default/files/Diagram2.png" alt="diagram2"></p>
+<p>Knihovna nabízí pouze jeden generátor pseudonáhodných čísel s rovnoměrným rozdělením, jenž implementuje algoritmus Mersenne Twister. Jedná se o převzatou původní implementaci, kterou v jazyce C vytvořili a pod volnou licencí v [Matsumoto] publikovali Matsumoto a Nishimura a kterou do jazyka C++ portoval Jasper Bedaux. V kódu bylo sice provedeno několik změn, ale jedná se spíše o změny formálního rázu za účelem přizpůsobení návrhu knihovny. Základní vlastnosti a srovnání algoritmu se v tomto dokumentu již objevily a jeho podrobný popis je podán tvůrci v článku [Matsumoto].</p>
+<p>Transformace z rovnoměrného rozdělení do všech šesti rozdělení pravděpodobnosti, která knihovna podporuje, jsou implementovány v šabloně třídy <em>RandomGenerator</em> jako její veřejné metody. Použité algoritmy jsou jak původní tak i převzaté a již byly detailněji rozebrány v přecházející části tohoto dokumentu, kde jsou uvedeny postupy odvození (je-li použita metoda inverzní transformace) nebo alespoň zdroje z nichž byly algoritmy čerpány. Z hlediska implementace však jistě stojí za zmínku mechanizmus uložení některých výsledků mezivýpočtů, který je použit pro urychlení generování Poissonova rozdělení za předpokladu, že je aspoň dvakrát za sebou použit stejný parametr. Jinými slovy, je zefektivněno časté po sobě jdoucí generování Poissonova rozdělení se stejným parametrem.</p>
+<p>Implementace knihovny je kompletně celá umístěna v hlavičkových souborech a to jednak, protože je to nutnou podmínkou při použití šablon, a jednak z pragmatických důvodů proto, aby se uživatel nemusel starat o kompilaci knihovny a mohl ji jednoduše přiložit direktivou include. Ke knihovně je přiložena implementace funkce logaritmus gamma funkce, jež je použita v některých algoritmech pro urychlení výpočtu faktoriálu [NR]. Tato funkce je sice součástí chystaného standardu C++0x jazyka C++, který je na některých platformách již nyní k dispozici ve standardní knihovně funkcí (ač má být oficiálně vydán na až jaře roku 2011) avšak zatím by bez ní knihovna nebyla úplná. V budoucnu, až se standard C++0x rozšíří, jí bude možno z knihovny odstranit.</p>
+<h2>Testování</h2>
+<p>Pro testování byly použity platformy Unix a MS Windows. Otestované kompilátory jsou následující:</p>
+<ul>
+<li>gcc version 4.4.3, 64-bitové PC</li>
+<li>gcc version 4.4.4, 32-bitové PC</li>
+<li>MingW-32</li>
+</ul>
+<p>Knihovna je bez problémů přenositelná. Kromě standardní knihovny funkcí nejsou použity žádné jiné knihovny ani moduly jazyka.</p>
+<h3>Testování správnosti generovaných rozdělení</h3>
+<p>Důležitým milníkem ve vývoji knihovny bylo otestování správnosti generování implementovaných pravděpodobnostních rozdělení, respektive správnosti transformačních metod. Výstupem testovacího programu je posloupnost čísel v určitém pravděpodobnostním rozdělení a tu je potřeba ověřit.</p>
+<p>Existuje sice řada testů, které matematicky dokáží zda daná posloupnost čísel náleží určitému rozdělení pravděpodobnosti, pro testování knihovny byl však vybrán méně exaktní test. Byly vytvořeny skripty pro program gnuplot, což je program určený pro počítačové kreslení grafů, které do jednoho svého výstupu, jímž je rastrový obrázek, vykreslí jeden histogram náhodné posloupnosti 100 000 hodnot a k tomu odpovídající analytické vyjádření funkce hustoty pravděpodobnosti daného rozdělení. Každé rozdělení je takto testováno několikrát, vždy s jinými parametry. Histogram posloupnosti a křivka funkce hustoty pravděpodobnosti spolu musí vždy přesně korelovat. U některých rozdělení odhalila testovací metoda v průběhu testování chyby, které, jak se později ukázalo, byly implementačního rázu; například opačné znaménko u výpočtu v algoritmu transformační metody normálního rozdělení. Chyba se projevila tak, že histogram vykazoval výchylky (ne na celém svém rozsahu) od analytického vyjádření hustoty pravděpodobnosti.</p>
+<p>Všechna rozdělení úspěšně prošla řadou testů s různými parametry.</p>
+<p>Ke knihovně jsou přiloženy také testovací skripty pro program gnuplot, které se spouští pomocí testovacího programu (je třeba mít nainstalovaný program gnuplot), takže je možno vyzkoušet a nahlédnout na výsledky tří vybraných posloupností pro každé rozložení (každá posloupnost má samozřejmě jiné přednastavené parametry).</p>
+<p>Pozn.: Grafický výstup nebude fungovat na platformě MS Windows.</p>
+<h2>Závěr</h2>
+<p>Byla vytvořena knihovna pro generování pseudonáhodných čísel implementující šest pravděpodobnostních rozdělení pro potřeby modelování a simulací, která jsou generována transformací z volitelného generátoru rovnoměrně rozložené náhodnosti. Knihovna se uplatní při psaní simulačních modelů v jazyce C++, jejichž cílem je efektivní a přesná simulace. Použití knihovny je tak jednoduché jako vložení hlavičkového souboru a vytvoření instance třídy, přičemž má uživatel možnost použít vlastní generátor rovnoměrného rozdělení, pokud nechce použít výchozí, byť kvalitní.</p>
+<p>Návrh a architektura knihovny včetně popisu použitých metod a postupů jsou zdokumentovány, aby pomohly pochopit, jakým způsobem knihovna pracuje, jak může být použita či případně upravena. Dokumentace knihovny si nekladla za cíl dopodrobna vyložit všechny detaily a vysvětlit všechny algoritmy. Mnoho věcí zůstalo skryto, ale vždy bylo ukázáno, kde je možno je najít. To nejdůležitější, jímž je nastínění celkové problematiky, kterou tvorba knihovny pro generování pseudonáhodných čísel představuje, je v dokumentaci obsaženo.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+  <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://www.weibull.com/LifeDataWeb/the_gamma_distribution.htm">Wgamma</a>        </div>
+              <div class="field-item even">
+                    <a href="http://en.wikipedia.org/wiki/Gamma_distribution">Wiki2</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://bit.ly/fMno3p">wiki</a>        </div>
+              <div class="field-item even">
+                    <a href="http://homen.vsb.cz/~oti73/cdpast1/KAP05/PRAV5.HTM">HOMEN</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://iastat.vse.cz/Exponenc.htm">IASTAT</a>        </div>
+              <div class="field-item even">
+                    <a href="http://home.zcu.cz/~ttoupal/www-kma/PSB/PSB_dodatky.pdf">Toupal</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://www.nr.com/">NR</a>        </div>
+              <div class="field-item even">
+                    <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/eindex.html">Matsumoto2</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html">Matsumoto</a>        </div>
+              <div class="field-item even">
+                    <a href="http://google.com">Marsaglia, G.; Tsang, W.-W.: A Simple Method for Generating Gamma Variables.</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://google.com">Marsaglia, G: Random Number Generators.</a>        </div>
+              <div class="field-item even">
+                    <a href="http://google.com">Leva, J. L.: A Fast Normal Random Number Generator.</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://google.com">          Computer Generation of Random Variables Using the Ration of Uniform Deviates. </a>        </div>
+              <div class="field-item even">
+                    <a href="http://google.com">              Computer Methods for Sampling from Gamma, Beta, Poisson and Binomial Distributions </a>        </div>
+        </div>
+</div>
+</fieldset>
+

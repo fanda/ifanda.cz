@@ -1,0 +1,87 @@
+---
+title: Možnosti výpočtu soustavy rovnic pomocí matice či determinantu
+date: 2010-01-17 23:10
+layout: article
+comments: false
+tags: [matematika]
+geshifilter: false
+---
+<p>Mějme soustavu tří rovnic se 3 neznámými a počítejme ji pomocí matic a determantů.</p>
+SPLIT
+<h2>Převedení soustavy rovnic na matici</h2>
+<div>Mějme soustavu tří rovnic se 3 neznámými:</div>
+<pre>
+ x + 2y + z = 6 
+2x -  y + z = 5  
+ x -  y - z = 6</pre>
+<p>a z ní matici:</p>
+<pre>
+( 1  2  1 6 )
+( 2 -1  1 5 )
+( 1 -1 -1 6 )</pre>
+<p>Možnosti řešení jsou:</p>
+<ol>
+<li>úprava matice na trojúhelníkový tvar</li>
+<li>pomocí Cramerova pravidla</li>
+</ol>
+<h3>1. Úprava matice na trojúhelníkový tvar</h3>
+<p>Postup konstrukce trojúhelníkového tvaru matice:</p>
+<ol>
+<li>Dělením prvního řádku dostaneme číslo 1 na 1. místě 1. řádku matice</li>
+<li>Násobíme první řádek takovými čísly, aby po odečtení jeho násobků od dalších řádků vyšla na jejich prvním místě vždy nula. Tak získáme nuly v prvním sloupci matice.</li>
+<li>Obdobně pracujeme s druhým číslem 2. řádku, pokud je různé od nuly. (Pokud je číslo na tomto místě matice rovno nule, vhodně přehodíme řádky matice.)</li>
+<li>Využíváme změn pořadí řádků matice k urychlení postupu.</li>
+</ol>
+<h4>Příklad</h4>
+<p>Vezměme naši matici a upravujme:<br>
+( 1 -1 -1 6 )  *(-2)-/   *(-1)-/        ( 1 -1 -1  6 )                 ( 1 -1 -1   6 )<br>
+( 2 -1  1 5 )  &lt; ----/         /    ~   ( 0  1  3 -7 ) *(-3)-/    ~  ( 0  1  3  -7 )           ~<br>
+( 1  2  1 6 )  &lt; -------------/          ( 0  3  2  0 ) &lt; ---/         ( 0  0 -7  21 ) :(-7)</p>
+<p>  a výsledná matice    ( 1 -1 -1 6 )<br>
+             ~                 ( 0  1  3 -7 )  <br>
+                                ( 0  0   1 -3 )<br>
+kterou můžeme přepsat zpět na rovnice<br>
+ x - y -    z =   6<br>
+      y + 3z = -7<br>
+              z = -3   <br>
+Odtud už je postupem od zdola snadné dopočítat všechny výsledky(x = 5, y = 2, z = -3).<br>
+ </p>
+<h3>2. Výpočet soustavy rovnic pomocí Cramerova pravidla</h3>
+<p>Metoda výpočtu soustavy rovnic pomocí Cramerova pravidla požaduje znalos výpočtu determinantu matice. Platí, že je potřeba vypočítat takový počet determinantů, kolik má soustava neznámých plus 1 navíc.</p>
+<ol>
+<li>Vypočítáme determinant nerozšířené matice soustavy rovnic D (determinant matice bez absolutních členů)</li>
+<li>Postupně počítáme další determinanty(Dx, Dy, Dz...), ve kterých příslušné sloupce nahrazujeme sloupcem absolutních členů soustavy rovnic.</li>
+<li>Neznámé vypočteme jednoduchým podílem příslušného determinantu a determinantu nerozšířené matice soustavy.</li>
+</ol>
+<p>Je-li determinant nerozšířené matice soustavy rovnic D různý od nuly, pak tato soustava má jediné řešení.<br>
+Je-li tento determinant D = 0, pak soustava buď nemá řešení a nebo má nekonečně mnoho řešení.</p>
+<h4>Příklad</h4>
+<p>
+       | 1  2  1 |<br>
+D =  | 2 -1  1 |  = 1 - 2 + 2 + 1 + 1 + 4 = 7  ⇒ soustava má jedno řešení  <br>
+       | 1 -1 -1 |</p>
+<p>          | 6  2  1 |<br>
+Dx =   | 5 -1  1 |  = 6 - 5 + 12 + 6 + 6 + 10 = 35  ⇒ <strong>x =</strong> Dx / D = 35 / 7 =<strong> 5  </strong><br>
+          | 6 -1 -1 |</p>
+<p>          | 1  6   1 |<br>
+Dy =   | 2  5   1 |  = -5 + 12 + 6 - 5 - 6 + 12 = 14 ⇒<strong> </strong><strong>y =</strong> Dy / D = 14 / 7 =<strong> 2 </strong> <br>
+          | 1  6  -1 |</p>
+<p>          | 1  2  6 |<br>
+Dz =   | 2 -1  5 |  = -6 - 12 + 10 + 6 + 5 - 24 = -21 ⇒<strong> z =</strong> Dz / D = -21 / 7 = <strong>-3</strong>  <br>
+          | 1 -1  6 |</p>
+<p>Pro výpočet determinantů bylo použito Sarrusovo pravidlo.</p>
+<p> </p>
+<p> </p>
+<h2>Není Vám něco jasné? Zeptejte se v komentářích!</h2>
+<p>Zkusíme společně najít odpověď.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/matematika/soustavy-rovnic-matice-determinanty">Soustavy rovnic, matice a determinanty</a>        </div>
+        </div>
+</div>
+</fieldset>
+

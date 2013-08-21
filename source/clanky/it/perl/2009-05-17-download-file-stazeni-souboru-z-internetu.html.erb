@@ -1,0 +1,61 @@
+---
+title: Download File - Stažení souboru z internetu
+date: 2009-05-17 21:30
+layout: article
+comments: false
+tags: [it, perl]
+geshifilter: true
+---
+<p><img style="float:left;" src="/a/pix/perl-sm.png" alt="Perl Camel - velbloud Perl"><span style="width:70%;float:right;">Tato glosa pomůže všem, kteří hledají nejjednodušší způsob stahování souborů z internetu v jazyce <strong>Perl</strong>. Konkrétně nám pomůže modul LWP::UserAgent. Postupně budu psát jednotlivé řádky kódu a popisovat jej.</span><br>
+</p>
+<p style="clear:both;"></p>
+SPLIT
+<p>Nejprve potřebujeme připojit všechny potřebné moduly. Jsou to HTTP::Request a již zmíněný LWP::UserAgent.<br>
+</p>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw2">use</span> HTTP<span class="sy0">::</span><span class="me2">Request</span><span class="sy0">::</span><span class="me2">Common</span> <a href="http://perldoc.perl.org/functions/qw.html"><span class="kw3">qw</span></a><span class="br0">(</span>GET HEAD<span class="br0">)</span><span class="sy0">;</span>
+<span class="kw2">use</span> LWP<span class="sy0">::</span><span class="me2">UserAgent</span><span class="sy0">;</span></pre></div>
+<br>
+Všimněte si, že mohu předem specifikovat, které požadavky na server budu mít. Požadavek typu HEAD není povinný, ale budu na něm demostrovat ještě jednu, hezkou funkci modulu use LWP::UserAgent;, konkrétně získání mime typu stahovaného souboru.<br>
+Vytvoříme instanci UserAgenta a nastavíme jej pro naše požadavky. V hlavičce každého požavku je také uvedeno, jaký typ klienta o příslušný soubor žádá. Můžeme server trochu zmást tím, že se budeme tvářit jako bychom byli prohlížeč Mozilla.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw1">my</span> <span class="re0">$ua</span> <span class="sy0">=</span> LWP<span class="sy0">::</span><span class="me2">UserAgent</span><span class="sy0">-&gt;</span><span class="me1">new</span><span class="sy0">;</span> <span class="co1"># vytvoření instance UserAgenta </span>
+<span class="re0">$ua</span><span class="sy0">-&gt;</span><span class="me1">agent</span><span class="br0">(</span><span class="st0">"Mozilla/8.0"</span><span class="br0">)</span><span class="sy0">;</span> <span class="co1"># určení, jak se bude UA hlásit serveru</span></pre></div>
+<br>
+Budeme potřebovat dvě proměnné a to objekt pro HTTP požadavek(request) a objekt pro odpověď od serveru(response).<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw1">my</span> <span class="re0">$request</span><span class="sy0">;</span>
+<span class="kw1">my</span> <span class="re0">$response</span><span class="sy0">;</span></pre></div>
+<br>
+Nastavíme objekt požadavku pro stažení HTTP hlavičky souboru umístěného na příslušné webové adrese a pomocí UserAgentovy funkce request hlavičku stáhneme. Výsledek operace se uloží do proměnné response, odkud si knihovní funkcí vytáhneme MIME type. V tomto ukázkovém příkladě MIME jenom vypíšeme, ale prakticky s ním jde dělat cokoli.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="re0">$request</span> <span class="sy0">=</span> HEAD <span class="st_h">'http://ukazka.tld/soubor.typ'</span><span class="sy0">;</span>
+<span class="re0">$response</span> <span class="sy0">=</span> <span class="re0">$ua</span><span class="sy0">-&gt;</span><span class="me1">request</span><span class="br0">(</span><span class="re0">$request</span><span class="br0">)</span><span class="sy0">;</span>
+<a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="re0">$response</span><span class="sy0">-&gt;</span><span class="me1">content_type</span><span class="br0">(</span><span class="br0">)</span><span class="sy0">;</span> <span class="co1"># vypíše MIME type</span></pre></div>
+<br>
+Stejně jednoduše jako typ obsahu stáhneme i celý soubor nebo stránku. Kód maličko pozměníme tak, aby serveru posílal požadavky typu GET a přidáme druhý parametr UserAgentovy funkci request, kterým určíme jméno stahovaného souboru. Nakonec zkontrolujeme úspěšnost stahování souboru.<br>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="re0">$request</span> <span class="sy0">=</span> GET <span class="st_h">'http://ukazka.tld/soubor.typ'</span><span class="sy0">;</span>
+<span class="re0">$response</span> <span class="sy0">=</span> <span class="re0">$ua</span><span class="sy0">-&gt;</span><span class="me1">request</span><span class="br0">(</span><span class="re0">$request</span><span class="sy0">,</span> <span class="st0">"soubor.typ"</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="kw1">if</span> <span class="br0">(</span> <span class="re0">$response</span><span class="sy0">-&gt;</span><span class="me1">is_success</span> <span class="br0">)</span> <span class="br0">{</span>
+  <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"Soubor byl úspěšně stažen.<span class="es0">\n</span>"</span><span class="sy0">;</span>
+<span class="br0">}</span>
+<span class="kw1">else</span> <span class="br0">{</span>
+  <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"Nepodařilo se stáhnout soubor.<span class="es0">\n</span>"</span><span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+<br>
+Pokud se stažení souboru podařilo, najdeme jej (v tomto případě) ve stejném adresáři jako spuštěný skript.<br>
+Podívejte se blíže na modul UserAgent. Jedná se o výborného pomocníka při práci s protokolem http.
+<h3>Fragment kódu</h3>
+<p></p>
+<div class="geshifilter"><pre class="perl geshifilter-perl" style="font-family:monospace;"><span class="kw2">use</span> HTTP<span class="sy0">::</span><span class="me2">Request</span><span class="sy0">::</span><span class="me2">Common</span> <a href="http://perldoc.perl.org/functions/qw.html"><span class="kw3">qw</span></a><span class="br0">(</span>GET HEAD<span class="br0">)</span><span class="sy0">;</span>
+<span class="kw2">use</span> LWP<span class="sy0">::</span><span class="me2">UserAgent</span><span class="sy0">;</span>
+<span class="kw1">my</span> <span class="re0">$ua</span> <span class="sy0">=</span> LWP<span class="sy0">::</span><span class="me2">UserAgent</span><span class="sy0">-&gt;</span><span class="me1">new</span><span class="sy0">;</span>
+<span class="re0">$ua</span><span class="sy0">-&gt;</span><span class="me1">agent</span><span class="br0">(</span><span class="st0">"Mozilla/8.0"</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="re0">$request</span> <span class="sy0">=</span> HEAD <span class="st_h">'http://ukazka.tld/soubor.typ'</span><span class="sy0">;</span>
+<span class="re0">$response</span> <span class="sy0">=</span> <span class="re0">$ua</span><span class="sy0">-&gt;</span><span class="me1">request</span><span class="br0">(</span><span class="re0">$request</span><span class="br0">)</span><span class="sy0">;</span>
+<a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="re0">$response</span><span class="sy0">-&gt;</span><span class="me1">content_type</span><span class="br0">(</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="re0">$request</span> <span class="sy0">=</span> GET <span class="st_h">'http://ukazka.tld/soubor.typ'</span><span class="sy0">;</span>
+<span class="re0">$response</span> <span class="sy0">=</span> <span class="re0">$ua</span><span class="sy0">-&gt;</span><span class="me1">request</span><span class="br0">(</span><span class="re0">$request</span><span class="sy0">,</span> <span class="st0">"soubor.typ"</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="kw1">if</span> <span class="br0">(</span> <span class="re0">$response</span><span class="sy0">-&gt;</span><span class="me1">is_success</span> <span class="br0">)</span> <span class="br0">{</span>
+  <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"Soubor byl úspěšně stažen.<span class="es0">\n</span>"</span><span class="sy0">;</span>
+<span class="br0">}</span>
+<span class="kw1">else</span> <span class="br0">{</span>
+  <a href="http://perldoc.perl.org/functions/print.html"><span class="kw3">print</span></a> <span class="st0">"Nepodařilo se stáhnout soubor.<span class="es0">\n</span>"</span><span class="sy0">;</span>
+<span class="br0">}</span></pre></div>
+

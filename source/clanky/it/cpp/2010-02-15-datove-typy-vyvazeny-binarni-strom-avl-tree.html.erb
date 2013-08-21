@@ -1,0 +1,359 @@
+---
+title: Datové typy - Vyvážený binární strom (AVL tree)
+date: 2010-02-15 22:40
+layout: article
+comments: false
+tags: [it, c+cpp]
+geshifilter: true
+---
+<p>Pro různé účely jsem vytvářel různé datové typy. Některé z nich nejsou zase tak běžné, jak by se mohlo zdát. Například nerekurzivní (rekurzivní je jen jeho uvolnění) binární AVL strom. Zde je jedna jeho implementace v jazyce C.</p>
+SPLIT
+<p>AVL strom je samovyvažovací binární strom. Důležitost tohoto stromu tkví v jeho vyváženosti, která se od dokonale vyváženého binárního stromu liší maximálně o 45%, což matematicky dokázali pánové <strong>A</strong>delson-<strong>V</strong>elsky a <strong>L</strong>andis.<br>
+Pokud v(n) je výška AVL-stromu s n uzly, potom platí </p>
+<pre>log(n+1) &lt;= v(n) &lt;= 1.44*log(n+2) - 0.328</pre>
+<p><br></p>
+<h3>Vlastnosti vrcholů AVL stromu</h3>
+<ul>
+<li>Vrchol má nejvýše dva potomky (je to binární strom).</li>
+<li>V levém podstromu vrcholu jsou pouze vrcholy s menší hodnotou klíče (definice binárního vyhledávacího stromu).</li>
+<li>V pravém podstromu vrcholu jsou pouze vrcholy s větší hodnotou klíče .</li>
+<li>Délka nejdelší větve levého a pravého podstromu se liší nejvýše o 1 (výškové vyvážení).</li>
+</ul>
+<h3>Vyvažování AVL stromu</h3>
+<p>Vyvažování se provádí pomocí dvou procedur, při kterých se mění pořadí uzlů ve stromu. Procedurám se říká rotace, přičemž každá rotace má trochu zavádějící specifický název. Jednodušší rotace se nazývá "single rotation" a přesouvá <em>dva</em> uzly, složitější je pojmenována jako "double rotation" a přesouvá <em>tři</em> uzly.</p>
+<h2>Zdrojový kód AVL stromu v jazyce C</h2>
+<p>AVL strom byl implementován pro účely tabulky symbolů překladače programovacího jazyka IFJ09. Klíčem stromu je řetězec. Hodnotou je struktura tSymbol.</p>
+<h3>Obsah hlavičkového souboru</h3>
+<p></p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;"><span class="co2">#include &lt;stdio.h&gt;</span>
+<span class="co2">#include &lt;stdlib.h&gt;</span>
+<span class="co2">#include &lt;string.h&gt;</span>
+ 
+<span class="coMULTI">/* Chybové kódy */</span>
+<span class="co2">#define ERR_AVL_MAX       2     /* počet možných chyb */</span>
+<span class="co2">#define ERR_AVL_INIT      1     /* chyba při malloc */</span>
+<span class="co2">#define ERR_AVL_KEY       2     /* chyba při malloc klíče */</span>
+ 
+<span class="coMULTI">/* Definice stavů */</span>
+<span class="co2">#define BALANCE  -1 /* podstromy jsou vyvážené */</span>
+<span class="co2">#define LEFT      0 /* levý podstrom je vyšší  */</span>
+<span class="co2">#define RIGHT     1 /* pravý podstrom je vyšší */</span>
+<span class="co2">#define SUBTREES  2 /* počet podstromů celkem  */</span>
+ 
+<span class="coMULTI">/* Datové struktury */</span>
+<span class="kw4">typedef</span> <span class="kw4">struct</span> avl_tree_value <span class="br0">{</span>
+  <span class="kw4">void</span> <span class="sy0">*</span> ptr<span class="sy0">;</span>
+  <span class="kw4">int</span> type<span class="sy0">;</span>
+  <span class="kw4">char</span> init<span class="sy0">;</span>   <span class="coMULTI">/* příznak použití */</span>
+<span class="br0">}</span> tSymbol<span class="sy0">;</span>
+ 
+<span class="kw4">typedef</span> <span class="kw4">struct</span> avl_tree_node <span class="br0">{</span>
+  <span class="kw4">char</span> <span class="sy0">*</span> key<span class="sy0">;</span>  <span class="coMULTI">/* klíč tabulky - řetězec */</span>
+  tSymbol <span class="sy0">*</span> value<span class="sy0">;</span> <span class="coMULTI">/* struktura hodnot tabulky symbolů */</span>
+  <span class="kw4">signed</span> <span class="kw4">char</span> height<span class="sy0">;</span>  <span class="coMULTI">/* stav výšky */</span>
+  <span class="kw4">struct</span> avl_tree_node <span class="sy0">*</span> sub<span class="br0">[</span>SUBTREES<span class="br0">]</span><span class="sy0">;</span>  <span class="coMULTI">/* pole uzlů */</span>
+<span class="br0">}</span> tAVL<span class="sy0">;</span>
+ 
+<span class="coMULTI">/* Prototypy funkcí */</span>
+<span class="kw4">void</span> tAVLError <span class="br0">(</span> <span class="kw4">int</span> error_code <span class="br0">)</span><span class="sy0">;</span>
+tAVL <span class="sy0">*</span> tAVLInit <span class="br0">(</span><span class="br0">)</span><span class="sy0">;</span>
+tSymbol <span class="sy0">*</span> tAVLFind <span class="br0">(</span> tAVL <span class="sy0">*</span> tree<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str <span class="br0">)</span><span class="sy0">;</span>
+<span class="kw4">int</span> tAVLInsert <span class="br0">(</span> tAVL <span class="sy0">**</span> tree<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="sy0">,</span> tSymbol <span class="sy0">*</span> value <span class="br0">)</span><span class="sy0">;</span>
+<span class="kw4">void</span> tAVLFree <span class="br0">(</span> tAVL <span class="sy0">*</span> tree <span class="br0">)</span><span class="sy0">;</span>
+ 
+<span class="kw4">void</span> tAVL_balance_path<span class="br0">(</span>tAVL <span class="sy0">*</span> path<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="br0">)</span><span class="sy0">;</span>
+<span class="kw4">void</span> tAVL_balance<span class="br0">(</span>tAVL <span class="sy0">**</span> top<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="br0">)</span><span class="sy0">;</span>
+tAVL <span class="sy0">*</span> tAVL_single_rot<span class="br0">(</span>tAVL <span class="sy0">**</span> top<span class="sy0">,</span> <span class="kw4">int</span> direction <span class="br0">)</span><span class="sy0">;</span>
+tAVL <span class="sy0">*</span> tAVL_double_rot<span class="br0">(</span>tAVL <span class="sy0">**</span> top<span class="sy0">,</span> <span class="kw4">int</span> direction<span class="sy0">,</span> <span class="kw4">int</span> third <span class="br0">)</span><span class="sy0">;</span></pre></div>
+<h3>Soubor definic funkcí</h3>
+<p></p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;"><span class="kw4">static</span> <span class="kw4">int</span> idcounter <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span>
+ <span class="coMULTI">/**
+ * Vypíše chybu při práci s AVL stromem na standardní chybový výstup
+ * @param error_code Kód chyby
+ */</span>
+<span class="kw4">void</span> tAVLError <span class="br0">(</span> <span class="kw4">int</span> error_code <span class="br0">)</span> <span class="br0">{</span>
+    <span class="kw4">static</span> <span class="kw4">const</span> <span class="kw4">char</span><span class="sy0">*</span> ERR_AVL_STRINGS<span class="br0">[</span>ERR_AVL_MAX <span class="sy0">+</span> <span class="nu0">1</span><span class="br0">]</span> <span class="sy0">=</span> <span class="br0">{</span>
+        <span class="st0">"Unknown error"</span><span class="sy0">,</span>
+        <span class="st0">"AVL tree error: INIT"</span><span class="sy0">,</span>
+        <span class="st0">"AVL tree error: No memory for key"</span>
+    <span class="br0">}</span><span class="sy0">;</span>
+	  <span class="kw1">if</span> <span class="br0">(</span>error_code <span class="sy0">&lt;=</span> <span class="nu0">0</span> <span class="sy0">||</span> error_code <span class="sy0">&gt;</span> ERR_AVL_MAX<span class="br0">)</span>
+		    error_code <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+	  fprintf<span class="br0">(</span>stderr<span class="sy0">,</span> <span class="st0">"%s<span class="es1">\n</span>"</span><span class="sy0">,</span> ERR_AVL_STRINGS<span class="br0">[</span>error_code<span class="br0">]</span><span class="br0">)</span><span class="sy0">;</span>
+<span class="br0">}</span>
+ 
+ 
+<span class="coMULTI">/**
+ * Inicializace AVL stromu
+ * @return Prázdný AVL strom
+ */</span>
+tAVL <span class="sy0">*</span> tAVLInit<span class="br0">(</span><span class="br0">)</span>
+<span class="br0">{</span>
+    <span class="kw1">return</span> NULL<span class="sy0">;</span>
+<span class="br0">}</span>
+ 
+<span class="coMULTI">/**
+ * Uvolnění AVL stromu
+ * @param Strom k vymazání
+ */</span>
+<span class="kw4">void</span> tAVLFree<span class="br0">(</span>tAVL <span class="sy0">*</span> tree<span class="br0">)</span>
+<span class="br0">{</span>
+    <span class="kw1">if</span> <span class="br0">(</span>tree <span class="sy0">==</span> NULL<span class="br0">)</span> <span class="kw1">return</span><span class="sy0">;</span>
+	  <span class="kw1">if</span> <span class="br0">(</span>tree<span class="sy0">-&gt;</span>sub<span class="br0">[</span>LEFT<span class="br0">]</span> <span class="sy0">!=</span> NULL<span class="br0">)</span> <span class="co1">// vejdi do levého podstromu</span>
+        tAVLFree<span class="br0">(</span>tree<span class="sy0">-&gt;</span>sub<span class="br0">[</span>LEFT<span class="br0">]</span><span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>tree<span class="sy0">-&gt;</span>sub<span class="br0">[</span>RIGHT<span class="br0">]</span> <span class="sy0">!=</span> NULL<span class="br0">)</span> <span class="co1">// vejdi do pravého podstromu</span>
+        tAVLFree<span class="br0">(</span>tree<span class="sy0">-&gt;</span>sub<span class="br0">[</span>RIGHT<span class="br0">]</span><span class="br0">)</span><span class="sy0">;</span>
+    idcounter <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+    free<span class="br0">(</span>tree<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span> <span class="co1">// uvolni paměť</span>
+    free<span class="br0">(</span>tree<span class="br0">)</span><span class="sy0">;</span> <span class="co1">// uvolni paměť</span>
+ 
+<span class="br0">}</span>
+ 
+<span class="coMULTI">/**
+ * Vyhledávání v binárním stromu
+ * @param tree AVL strom určen k prohledání
+ * @param str Vyhledávaný řetězec
+ * @return Uzel s odpovídajícím klíčem
+ */</span>
+tSymbol <span class="sy0">*</span> tAVLFind<span class="br0">(</span>tAVL <span class="sy0">*</span> tree<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="coMULTI">/*
+    Klíčem je řetězec, proto používáme funkci strcmp, jejíž návratová
+    hodnota může nabývat hodnot:
+     -1 (nenalezeno, pokračuj směr vlevo),
+      0 (nalezeno, vrať uzel) a
+      1 (nenazeleno, pokračuj směr vpravo).
+    Při naplnění proměnné next nemůže díky podmínce while nastat
+    comparation == 0, tedy stačí zjistit zda comparation &gt; 0.
+  */</span>
+   <span class="kw4">int</span> comparation<span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>tree<span class="br0">)</span>
+        comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> tree<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">while</span> <span class="br0">(</span>tree <span class="sy0">&amp;&amp;</span> comparation<span class="br0">)</span> <span class="br0">{</span> <span class="coMULTI">/* vyhledávací cyklus */</span>
+        <span class="coMULTI">/* rozcestí vpravo|vlevo */</span>
+        <span class="kw4">int</span> next <span class="sy0">=</span> <span class="br0">(</span>comparation <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">?</span> RIGHT <span class="sy0">:</span> LEFT<span class="br0">)</span><span class="sy0">;</span>
+        tree <span class="sy0">=</span> tree<span class="sy0">-&gt;</span>sub<span class="br0">[</span>next<span class="br0">]</span><span class="sy0">;</span> <span class="coMULTI">/* přejdi na potomka */</span>
+        <span class="kw1">if</span> <span class="br0">(</span>tree<span class="br0">)</span>
+            comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> tree<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="kw1">return</span> tree <span class="sy0">?</span> tree<span class="sy0">-&gt;</span>value <span class="sy0">:</span> NULL<span class="sy0">;</span>
+<span class="br0">}</span>
+ 
+<span class="coMULTI">/**
+ * Vkládání do AVL stromu
+ * @return 1 při úspěchu, 0 při neúspěchu
+ */</span>
+<span class="kw4">int</span> tAVLInsert <span class="br0">(</span> tAVL <span class="sy0">**</span> tree<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="sy0">,</span> tSymbol <span class="sy0">*</span> value <span class="br0">)</span>
+<span class="br0">{</span>
+    <span class="kw1">if</span> <span class="br0">(</span>str <span class="sy0">==</span> NULL<span class="br0">)</span> <span class="br0">{</span>
+        <span class="kw4">char</span> tmpstr<span class="br0">[</span><span class="nu0">16</span><span class="br0">]</span><span class="sy0">;</span>
+        sprintf<span class="br0">(</span>tmpstr<span class="sy0">,</span> <span class="st0">"$%d"</span><span class="sy0">,</span> idcounter<span class="br0">)</span><span class="sy0">;</span>
+        idcounter<span class="sy0">++;</span>
+        str <span class="sy0">=</span> malloc<span class="br0">(</span><span class="kw4">sizeof</span><span class="br0">(</span><span class="kw4">char</span><span class="br0">)</span> <span class="sy0">*</span> strlen<span class="br0">(</span>tmpstr<span class="br0">)</span><span class="br0">)</span><span class="sy0">;</span>
+        <span class="kw1">if</span> <span class="br0">(</span>str <span class="sy0">==</span> NULL<span class="br0">)</span> <span class="br0">{</span>
+            tAVLError<span class="br0">(</span>ERR_AVL_KEY<span class="br0">)</span><span class="sy0">;</span>
+            <span class="kw1">return</span> <span class="nu0">0</span><span class="sy0">;</span>
+        <span class="br0">}</span>
+        strcpy<span class="br0">(</span>str<span class="sy0">,</span> tmpstr<span class="br0">)</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="coMULTI">/*  node je ukazatel na uzel stromu,
+        ttop je ukazatel na nevyvážený podstrom */</span>
+    tAVL <span class="sy0">*</span> node <span class="sy0">=</span> <span class="sy0">*</span>tree<span class="sy0">,</span> <span class="sy0">**</span> ttop <span class="sy0">=</span> tree<span class="sy0">;</span>
+    <span class="coMULTI">/* optimalizace pro výkon, uložení výsledku porovnání */</span>
+    <span class="kw4">int</span> comparation <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>node<span class="br0">)</span>
+        comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> node<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">while</span> <span class="br0">(</span>node <span class="sy0">&amp;&amp;</span> comparation<span class="br0">)</span> <span class="br0">{</span>
+        <span class="coMULTI">/* rozcestí vpravo|vlevo */</span>
+        <span class="kw4">int</span> next <span class="sy0">=</span> <span class="br0">(</span>comparation <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">?</span> RIGHT <span class="sy0">:</span> LEFT<span class="br0">)</span><span class="sy0">;</span>
+        <span class="kw1">if</span> <span class="br0">(</span>node<span class="sy0">-&gt;</span>height <span class="sy0">&gt;=</span> <span class="nu0">0</span><span class="br0">)</span> <span class="coMULTI">/* narážíme na nevyvážený podstrom */</span>
+            ttop <span class="sy0">=</span> tree<span class="sy0">;</span> <span class="coMULTI">/* ulož kořen nevyváženého podstromu */</span>
+        tree <span class="sy0">=</span> <span class="sy0">&amp;</span>node<span class="sy0">-&gt;</span>sub<span class="br0">[</span>next<span class="br0">]</span><span class="sy0">;</span> <span class="coMULTI">/* přejdi na potomka */</span>
+        node <span class="sy0">=</span> <span class="sy0">*</span>tree<span class="sy0">;</span> <span class="coMULTI">/* změň i pomocný ukazatel na strom */</span>
+        <span class="kw1">if</span> <span class="br0">(</span>node<span class="br0">)</span>
+            comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> node<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="kw1">if</span> <span class="br0">(</span>node<span class="br0">)</span> <span class="kw1">return</span> <span class="nu0">0</span><span class="sy0">;</span> <span class="coMULTI">/* klíč již existuje */</span>
+    <span class="coMULTI">/* klíč nenalezen, ukládání klíče */</span>
+    node <span class="sy0">=</span> malloc<span class="br0">(</span><span class="kw4">sizeof</span><span class="br0">(</span><span class="sy0">*</span>node<span class="br0">)</span><span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>node <span class="sy0">==</span> NULL<span class="br0">)</span> <span class="br0">{</span> <span class="coMULTI">/* chyba alokace */</span>
+        tAVLError<span class="br0">(</span>ERR_AVL_INIT<span class="br0">)</span><span class="sy0">;</span>
+        <span class="kw1">return</span> <span class="nu0">0</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    node<span class="sy0">-&gt;</span>sub<span class="br0">[</span>LEFT<span class="br0">]</span>  <span class="sy0">=</span> NULL<span class="sy0">;</span> <span class="coMULTI">/* nový uzel je prozatím list stromu*/</span>
+    node<span class="sy0">-&gt;</span>sub<span class="br0">[</span>RIGHT<span class="br0">]</span> <span class="sy0">=</span> NULL<span class="sy0">;</span>
+    node<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    node<span class="sy0">-&gt;</span>value <span class="sy0">=</span> value<span class="sy0">;</span>
+    node<span class="sy0">-&gt;</span>key <span class="sy0">=</span> str<span class="sy0">;</span>
+    <span class="coMULTI">/* klíč nám alokoval scanner, jen uložíme ukazatel
+    malloc(strlen(str));
+    if (node-&gt;key == NULL) {
+        tAVLError(ERR_AVL_KEY);
+        free(node);
+        return 0;
+    }
+    else
+        strncpy(node-&gt;key, str, strlen(str));*/</span>
+    <span class="sy0">*</span>tree <span class="sy0">=</span> node<span class="sy0">;</span> <span class="coMULTI">/* ulož uzel do stromu */</span>
+    tAVL_balance<span class="br0">(</span>ttop<span class="sy0">,</span> str<span class="br0">)</span><span class="sy0">;</span> <span class="coMULTI">/* vyvaž strom */</span>
+    <span class="kw1">return</span> <span class="nu0">1</span><span class="sy0">;</span>
+<span class="br0">}</span>
+ 
+ 
+<span class="coMULTI">/**
+ * Druhý průchod stromem při vkládání. Upravuje vyváženost cesty
+ * k přidanému uzlu tak, že kromě kořene zneváží všechny uzly.
+ * @param path Cesta AVL stromu ( ergo uzel stromu )
+ * @param str Hodnota klíče uzlu AVL stromu
+ */</span>
+<span class="kw4">void</span> tAVL_balance_path<span class="br0">(</span>tAVL <span class="sy0">*</span> path<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="br0">)</span>
+<span class="br0">{</span>
+    <span class="kw4">int</span> comparation<span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>path<span class="br0">)</span>
+        comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> path<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">while</span> <span class="br0">(</span>path <span class="sy0">&amp;&amp;</span> comparation<span class="br0">)</span> <span class="br0">{</span>
+        <span class="kw4">int</span> next <span class="sy0">=</span> <span class="br0">(</span>comparation <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">?</span> RIGHT <span class="sy0">:</span> LEFT<span class="br0">)</span><span class="sy0">;</span>
+        path<span class="sy0">-&gt;</span>height <span class="sy0">=</span> next<span class="sy0">;</span> <span class="coMULTI">/* vyvážení nastaveno dle směru ku klíči */</span>
+        path <span class="sy0">=</span> path<span class="sy0">-&gt;</span>sub<span class="br0">[</span>next<span class="br0">]</span><span class="sy0">;</span>
+        <span class="kw1">if</span> <span class="br0">(</span>path<span class="br0">)</span>
+            comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> path<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+<span class="br0">}</span>
+ 
+<span class="coMULTI">/**
+ * Vyvažování stromu. Pokud je strom u kořene nevyvážený, je třeba provést
+ * rotaci a upravit vyvážení i na cestě ku klíči.
+ * Rozhodování o rotaci probíhá ve třech krocích (first,second,third).
+ * @param top Ukazatel na strom
+ * @param str Hodnota klíče uzlu AVL stromu
+ */</span>
+<span class="kw4">void</span> tAVL_balance<span class="br0">(</span>tAVL <span class="sy0">**</span> top<span class="sy0">,</span> <span class="kw4">char</span> <span class="sy0">*</span> str<span class="br0">)</span>
+<span class="br0">{</span>
+    <span class="kw1">if</span> <span class="br0">(</span><span class="sy0">!</span><span class="br0">(</span><span class="sy0">*</span>top<span class="br0">)</span><span class="br0">)</span> <span class="kw1">return</span><span class="sy0">;</span>
+    tAVL <span class="sy0">*</span> path <span class="sy0">=</span> <span class="sy0">*</span>top<span class="sy0">;</span> <span class="coMULTI">/* Začněme od kořene */</span>
+    <span class="kw4">int</span> first<span class="sy0">,</span> second<span class="sy0">,</span> third<span class="sy0">;</span> <span class="coMULTI">/* stavy jednotlivých kroků */</span>
+    <span class="kw4">int</span> comparation<span class="sy0">;</span>
+    <span class="coMULTI">/* Je-li strom u kořene vyvážený, uprav vyvážení na cestě ku klíči
+     * a skonči.
+     */</span>
+ 
+    <span class="kw1">if</span> <span class="br0">(</span>path<span class="sy0">-&gt;</span>height <span class="sy0">&lt;</span> <span class="nu0">0</span><span class="br0">)</span> <span class="br0">{</span>
+        tAVL_balance_path<span class="br0">(</span>path<span class="sy0">,</span> str<span class="br0">)</span><span class="sy0">;</span>
+        <span class="kw1">return</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="coMULTI">/* Kořen podstromu je nevyvážen. first udává stranu, která nese klíč.
+     * Pokud first udává stranu kratší stranu podstromu, stačí jen upravit
+     * vyvážení kořene a cesty ku klíči a skončit.
+     */</span>
+    <span class="coMULTI">/* strcmp zde nevrátí nulu, protože top je přinejmenším rodič uzlu klíče
+     * již před voláním funkce tAVL_balance */</span>
+    first <span class="sy0">=</span> <span class="br0">(</span>strcmp<span class="br0">(</span>str<span class="sy0">,</span> path<span class="sy0">-&gt;</span>key<span class="br0">)</span> <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">?</span> RIGHT <span class="sy0">:</span> LEFT<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>path<span class="sy0">-&gt;</span>height <span class="sy0">!=</span> first<span class="br0">)</span> <span class="br0">{</span>
+        path<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span> <span class="coMULTI">/* nevyvážený kořen nastav na vyvážený */</span>
+        tAVL_balance_path<span class="br0">(</span>path<span class="sy0">-&gt;</span>sub<span class="br0">[</span>first<span class="br0">]</span><span class="sy0">,</span> str<span class="br0">)</span><span class="sy0">;</span>
+        <span class="kw1">return</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="coMULTI">/* Kořen podstromu je nevyvážen. second udává stranu potomka kořene, která
+     * nese klíč. Je-li nevyváženost na stejné straně jako v kořeni, provedeme
+     * přehození dvou uzlů (single rotation).
+     */</span>
+    comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> path<span class="sy0">-&gt;</span>sub<span class="br0">[</span>first<span class="br0">]</span><span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>comparation <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">)</span>
+        second <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    <span class="kw1">else</span>
+        second <span class="sy0">=</span> <span class="br0">(</span>comparation <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">?</span> RIGHT <span class="sy0">:</span> LEFT<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>first <span class="sy0">==</span> second<span class="br0">)</span> <span class="br0">{</span>
+        <span class="coMULTI">/* rotace dvou uzlů - single */</span>
+        path <span class="sy0">=</span> tAVL_single_rot<span class="br0">(</span>top<span class="sy0">,</span> first<span class="br0">)</span><span class="sy0">;</span>
+        tAVL_balance_path<span class="br0">(</span>path<span class="sy0">,</span> str<span class="br0">)</span><span class="sy0">;</span>
+        <span class="kw1">return</span><span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="coMULTI">/* Kořen podstromu je nevyvážen. third udává vyvážení prapotomka kořene
+     * na cestě k uzlu klíče. Provede se rotace tří uzlů (double rotation).
+     */</span>
+    path <span class="sy0">=</span> path<span class="sy0">-&gt;</span>sub<span class="br0">[</span>first<span class="br0">]</span><span class="sy0">-&gt;</span>sub<span class="br0">[</span>second<span class="br0">]</span><span class="sy0">;</span>
+    comparation <span class="sy0">=</span> strcmp<span class="br0">(</span>str<span class="sy0">,</span> path<span class="sy0">-&gt;</span>key<span class="br0">)</span><span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>comparation <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">)</span>
+        third <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    <span class="kw1">else</span>
+        third <span class="sy0">=</span> <span class="br0">(</span>comparation <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">?</span> RIGHT <span class="sy0">:</span> LEFT<span class="br0">)</span><span class="sy0">;</span>
+    path <span class="sy0">=</span> tAVL_double_rot<span class="br0">(</span>top<span class="sy0">,</span> first<span class="sy0">,</span> third<span class="br0">)</span><span class="sy0">;</span>
+    tAVL_balance_path<span class="br0">(</span>path<span class="sy0">,</span> str<span class="br0">)</span><span class="sy0">;</span>
+<span class="br0">}</span>
+ 
+<span class="coMULTI">/**
+ * Provádí operaci "single rotation", tedy záměnu dvou uzlů a
+ * přesuspořádání jimi tvořeného podstromu
+ * @param top Kořen měněného podstromu
+ * @param direction Směr rotace (0 = vlevo, 1 = vpravo)
+ * @return Krajní dolní uzel zvoleného směru
+ */</span>
+tAVL <span class="sy0">*</span> tAVL_single_rot<span class="br0">(</span>tAVL <span class="sy0">**</span> top<span class="sy0">,</span> <span class="kw4">int</span> direction <span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="coMULTI">/*
+        B              D
+       / \            / \
+      A   D    =&gt;    B   E
+         / \        / \
+        C   D      A   C
+  */</span>
+    tAVL <span class="sy0">*</span>B<span class="sy0">,</span> <span class="sy0">*</span>C<span class="sy0">,</span> <span class="sy0">*</span>D<span class="sy0">,</span> <span class="sy0">*</span>E<span class="sy0">;</span> <span class="coMULTI">/* ukazatele na uzly */</span>
+    B <span class="sy0">=</span> <span class="sy0">*</span>top<span class="sy0">;</span>
+    D <span class="sy0">=</span> B<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span><span class="sy0">;</span>
+    C <span class="sy0">=</span> B<span class="sy0">-&gt;</span>sub<span class="br0">[</span><span class="nu0">1</span> <span class="sy0">-</span> direction<span class="br0">]</span><span class="sy0">;</span>
+    E <span class="sy0">=</span> D<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span><span class="sy0">;</span>
+    <span class="sy0">*</span>top <span class="sy0">=</span> D<span class="sy0">;</span> <span class="coMULTI">/* novým kořenem je potomek stávajícího */</span>
+    D<span class="sy0">-&gt;</span>sub<span class="br0">[</span><span class="nu0">1</span> <span class="sy0">-</span> direction<span class="br0">]</span> <span class="sy0">=</span> B<span class="sy0">;</span> <span class="coMULTI">/* který se stává potomkem nového kořene */</span>
+    B<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span> <span class="sy0">=</span> C<span class="sy0">;</span> <span class="coMULTI">/* potomka D nahradí jeho potomek C */</span>
+    B<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    D<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    <span class="kw1">return</span> E<span class="sy0">;</span>
+<span class="br0">}</span>
+ 
+<span class="coMULTI">/**
+ * Provádí operaci "double rotation" nad nevyváženým stromem.
+ * @param top Kořen měněného podstromu
+ * @param direction Směr rotace (0 = vlevo, 1 = vpravo)
+ * @param third Vyvážení prapotomka
+ * @return Uzel prapotomka
+ */</span>
+tAVL <span class="sy0">*</span> tAVL_double_rot<span class="br0">(</span>tAVL <span class="sy0">**</span> top<span class="sy0">,</span> <span class="kw4">int</span> direction<span class="sy0">,</span> <span class="kw4">int</span> third <span class="br0">)</span>
+<span class="br0">{</span>
+  <span class="coMULTI">/*
+       B                    _D_
+      / \                  /   \
+     A   F                B     F
+        / \      ===&gt;    / \   / \
+       D   G            A   C  E  G
+      / \
+     C   E
+  */</span>
+    tAVL <span class="sy0">*</span>B<span class="sy0">,</span> <span class="sy0">*</span>C<span class="sy0">,</span> <span class="sy0">*</span>D<span class="sy0">,</span> <span class="sy0">*</span>E<span class="sy0">,</span> <span class="sy0">*</span>F<span class="sy0">;</span>
+    B <span class="sy0">=</span> <span class="sy0">*</span>top<span class="sy0">;</span>
+    F <span class="sy0">=</span> B<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span><span class="sy0">;</span>
+    D <span class="sy0">=</span> F<span class="sy0">-&gt;</span>sub<span class="br0">[</span><span class="nu0">1</span> <span class="sy0">-</span> direction<span class="br0">]</span><span class="sy0">;</span>
+    C <span class="sy0">=</span> D<span class="sy0">-&gt;</span>sub<span class="br0">[</span><span class="nu0">1</span> <span class="sy0">-</span> direction<span class="br0">]</span><span class="sy0">;</span>
+    E <span class="sy0">=</span> D<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span><span class="sy0">;</span>
+    <span class="sy0">*</span>top <span class="sy0">=</span> D<span class="sy0">;</span>
+    D<span class="sy0">-&gt;</span>sub<span class="br0">[</span><span class="nu0">1</span> <span class="sy0">-</span> direction<span class="br0">]</span> <span class="sy0">=</span> B<span class="sy0">;</span>
+    D<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span> <span class="sy0">=</span> F<span class="sy0">;</span>
+    B<span class="sy0">-&gt;</span>sub<span class="br0">[</span>direction<span class="br0">]</span> <span class="sy0">=</span> C<span class="sy0">;</span>
+    F<span class="sy0">-&gt;</span>sub<span class="br0">[</span><span class="nu0">1</span> <span class="sy0">-</span> direction<span class="br0">]</span> <span class="sy0">=</span> E<span class="sy0">;</span>
+    D<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    B<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    F<span class="sy0">-&gt;</span>height <span class="sy0">=</span> BALANCE<span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>third <span class="sy0">==</span> BALANCE<span class="br0">)</span>
+        <span class="kw1">return</span> NULL<span class="sy0">;</span>
+    <span class="kw1">if</span> <span class="br0">(</span>third <span class="sy0">==</span> direction<span class="br0">)</span> <span class="br0">{</span>
+        B<span class="sy0">-&gt;</span>height <span class="sy0">=</span> <span class="nu0">1</span> <span class="sy0">-</span> direction<span class="sy0">;</span>
+        <span class="kw1">return</span> E<span class="sy0">;</span>
+    <span class="br0">}</span>
+    <span class="kw1">else</span> <span class="br0">{</span>
+        F<span class="sy0">-&gt;</span>height <span class="sy0">=</span> direction<span class="sy0">;</span>
+        <span class="kw1">return</span> C<span class="sy0">;</span>
+    <span class="br0">}</span>
+<span class="br0">}</span></pre></div>
+<h2>Našli jste chybu nebo víte, jak strom vylepšit?</h2>
+<p>Napište to prosím zde do komentáře.</p>
+

@@ -1,0 +1,140 @@
+---
+title: Relace a zobrazení - příklady
+date: 2009-07-08 10:46
+layout: article
+comments: false
+tags: [matematika]
+geshifilter: false
+---
+<p>Řešené příklady do diskrétní matematiky, nyní pro změnu relace a zobrazení.</p>
+SPLIT
+      <h2>Příklad 1.</h2>
+<p>Na množině X = {1,2,3,4,5,6,7} je dána relace R = { (x, y) | x, y <img src="/sites/default/files/matsymbol/je_prvkem.png"> X, x dělí y }. Zapište R výčtem prvků. Určete její definiční obor a obor hodnot. Nalezněte inverzní relaci.</p>
+<p><strong>Řešení:</strong><br>Vytvoříme si relační tabulku. </p>
+<table rules="all" frame="box" style="width:200px;">
+<tr>
+<td></td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>4</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>6</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>7</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</table>
+<p><br><br>
+Pomocí tabulky snadno zapíšeme R výčtem prvků.<br>
+R = { (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (2, 2), (2, 4), (2, 6), (3, 3), (3, 6), (4, 4), (5, 5), (6, 6), (7, 7) }<br>
+<strong>Definiční obor</strong> Dom R = X = {1,2,3,4,5,6,7}<br>
+<strong>Obor hodnot</strong> Im R = X = {1,2,3,4,5,6,7}<br>
+<strong>Inverzní relace</strong> R<sup>-1</sup> = { (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (2, 2), (4, 2), (6, 2), (3, 3), (6, 3), (4, 4), (5, 5), (6, 6), (7, 7) }</p>
+<h2>Příklad 2.</h2>
+<p>
+Nechť R<sub>1</sub> = { (1, 2), (1, 6), (2, 4), (3, 4), (3, 6), (3, 8) }, R<sub>2</sub> = { (2, u), (4, s), (4, t), (6, t), (8, u) }. Zapište výčtem prvků relace R<sup>-1</sup><sub>1</sub>, R<sup>-1</sup><sub>2</sub>, R<sub>2</sub> ° R<sub>1</sub>, (R<sub>2</sub> ° R<sub>1</sub>)<sup>-1</sup>, R<sup>-1</sup><sub>1</sub> ° R<sup>-1</sup><sub>2</sub>.</p>
+<p><strong>Řešení:</strong><br>
+R<sup>-1</sup><sub>1</sub> = { (2, 1), (6, 1), (4, 2), (4, 3), (6, 3), (8, 3) }<br>
+R<sup>-1</sup><sub>2</sub> = { (u, 2), (s, 4), (t, 4), (t, 6), (u, 8) }<br>
+R<sub>2</sub> ° R<sub>1</sub> = { (1, u), (1, t), (2, s), (2, t), (3, s), (3, t), (3, u) }<br>
+(R<sub>2</sub> ° R<sub>1</sub>)<sup>-1</sup> = R<sup>-1</sup><sub>1</sub> ° R<sup>-1</sup><sub>2</sub> = { (u, 1), (s, 2), (s, 3), (t, 2), (t, 3), (u, 3), (t, 1) }</p>
+<h2>Příklad 3.</h2>
+<p>
+Nechť f(x) = sin x, g(x) = ln x, h(x) = 2x. Stanovte definiční obor a obor hodnot funkce g ° f ° h. Určete (g ° f ° h)(pí / 4).</p>
+<p><strong>Řešení:</strong><br>g ° f ° h = ln (sin2x).<br>
+Určíme Dom a Im jednotlivých funkcí:<br>
+Dom h = R, Im h = R<br>
+Dom f = R, Im f = &lt;-1, 1&gt;<br>
+Dom g = (0, nekonečno), Im g = R<br>
+Je třeba si uvědomit, že výstup vnitřní funkce se stává vstupem funkce vnější. Funkce g příjmá kladná reálná čísla, ale na výstupu funkce f je interval &lt;-1, 1&gt;. Im f "průnik" Dom g je interval (0, 1&gt;, tedy nový definiční obor vnější funkce g. Musíme zjistit, pro která x nabývá funkce f hodnot z intervalu (0, 1&gt;. Protože ale Dom f = Im h = Dom h = R, můžeme tak činit již pro složenou funkci f ° h, tedy pro sin2x.<br>
+<br>Z grafu funkce sin2x je vidět, že tato funkce nabývá hodnot (0, 1&gt; pro všechna x ze sjednocení otevřených intervalů(k*pí, k*pí + pí/2), kde k <img src="/sites/default/files/matsymbol/je_prvkem.png"> Z.. Toto sjednocení intervalů je také definičním oborem složené funkce g ° f ° h. Pro zjištění oboru hodnot si stačíuvědomit, která x jsou vstupem funkce g. To jsme zjistili již při určování definičního oboru složené funkce. Je jím interval (0, 1&gt;.</p>
+<p>Z grafu přirozeného logaritmu, tedy funkce g, je názorně vidět, že pro x <img src="/sites/default/files/matsymbol/je_prvkem.png"> (0, 1&gt; nabývá funkce g hodnot v intervalu (-nekonečno, 0&gt; a tento interval je také oborem hodnot složené funkce g ° f ° h.<br><br>
+Zbývá už jen určit funkční hodnotu pro x = pí/4.<br>
+pí/4 <img src="/sites/default/files/matsymbol/je_prvkem.png"> Dom (g ° f ° h) =&gt; (g ° f ° h)(pí/4) = ln (sin pí/2) = ln 1 = 0.<br>
+<strong>Výsledky</strong><br>
+Dom (g ° f ° h) = všechna x ze sjednocení otevřených intervalů(k*pí, k*pí + pí/2), kde k <img src="/sites/default/files/matsymbol/je_prvkem.png"> Z.<br>
+Im (g ° f ° h) = (-nekonečno, 0&gt;<br>
+(g ° f ° h)(pí/4) = 0
+</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/matematika/relace-zobrazeni">Relace a zobrazení</a>        </div>
+              <div class="field-item even">
+                    <a href="http://ifanda.cz/clanky/matematika/priklady-na-relace-ekvivalence">Příklady na relace a ekvivalence</a>        </div>
+        </div>
+</div>
+</fieldset>
+

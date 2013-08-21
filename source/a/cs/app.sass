@@ -1,0 +1,123 @@
+
+@import 'kube.min'
+@import 'syntax'
+
+$max_width: 940px
+
+.dn
+  display: none
+.clear, .out
+  clear: both
+.tac
+  text-align: center
+.bold
+  font-weight: 600
+
+.content, .wrapper
+  max-width: $max_width
+  margin: 24px auto
+
+
+#container
+  width: 100%
+
+#header
+  height: 216px
+  h1
+    font-size: 30px
+  #noc
+    height: 120px
+
+$primary_li_w: 100% / 8
+$primary_lia_lih: 2.4em
+$primary_lia_padding: 16px
+
+#primary
+  position: relative
+  z-index: 2
+  overflow: hidden
+  margin-bottom: 1.5em
+  border-radius: 3px
+  background: #ffffff
+  background: -moz-linear-gradient(top, white 0%, #e5e5e5 100%)
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, white), color-stop(100%, #e5e5e5))
+  background: -webkit-linear-gradient(top, white 0%, #e5e5e5 100%)
+  background: -o-linear-gradient(top, white 0%, #e5e5e5 100%)
+  background: -ms-linear-gradient(top, white 0%, #e5e5e5 100%)
+  background: linear-gradient(to bottom, white 0%, #e5e5e5 100%)
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e5e5e5',GradientType=0 )
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5)
+  ul
+    list-style: none
+    margin: 0
+    li
+      float: left
+      width: $primary_li_w
+      /* 	width: 14.5%;
+      text-align: center
+      &:first-child a
+        border-left: none
+      &.last
+        /* 	width: 13%;
+        a, span
+          border-right: none
+      a, span
+        vertical-align: baseline
+        line-height: $primary_lia_lih
+        padding: 0 $primary_lia_padding
+        text-decoration: none
+        color: #000
+        text-shadow: 0 1px 0 #fff
+        display: block
+        border-right: 1px solid #ddd
+        border-left: 1px solid #f6f6f6
+        &:hover
+          color: #000 !important
+          background: #ffffff
+          background: -moz-linear-gradient(top, white 0%, #f0f0f0 100%)
+          background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, white), color-stop(100%, #f0f0f0))
+          background: -webkit-linear-gradient(top, white 0%, #f0f0f0 100%)
+          background: -o-linear-gradient(top, white 0%, #f0f0f0 100%)
+          background: -ms-linear-gradient(top, white 0%, #f0f0f0 100%)
+          background: linear-gradient(to bottom, white 0%, #f0f0f0 100%)
+          filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f0f0f0',GradientType=0 )
+      span
+        color: #888
+        padding: 0 $primary_lia_padding - 1
+        text-shadow: none
+        background: #f8f8f8
+
+#center
+  .content
+    /*box-shadow: 0px 2px 6px rgba(100, 100, 100, 0.298)
+    /*border-radius: 3px
+    .inn
+      padding: 11px
+
+#content
+  min-height: 400px
+
+#sidebar-right
+  min-height: 400px
+  float: right
+  /*border: blue 1px solid
+
+article.inlist
+  margin-bottom: 1.5em
+  clear: both
+  header
+    time
+      font-size: 110%
+      font-variant: italic
+    a
+      color: #FD3838
+      text-decoration: none
+      &:hover
+        text-decoration: underline
+    h1
+      font-size: 20px
+    margin-bottom: 0.5em
+  p
+    margin-bottom: 0.5em
+  footer
+    clear: both

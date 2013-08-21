@@ -1,0 +1,151 @@
+---
+title: Sniffer pro routovací protokol RIP
+date: 2011-02-07 20:34
+layout: article
+comments: false
+tags: [it, c+cpp]
+geshifilter: true
+---
+<p><strong>Úkoly projektu Směrování RIP a RIPng</strong></p>
+<ol>
+<li>Nastudovat směrovací protokoly RIP a RIPng,</li>
+<li>naprogramovat sniffer RIP a RIPng zpráv,</li>
+<li>naprogramovat podvrhávač falešných RIP Response zpráv,</li>
+<li>za použití naprogramovaných nástrojů provést úspěšný útok,</li>
+<li>naprogramovat podvrhávač falešných RIP Request zpráv.</li>
+</ol>
+SPLIT
+<h2>Směrovací protokoly RIP a RIPng</h2>
+<h3>Krátký exkurz do historie protokolů RIP a jejich RFC</h3>
+<p>Protokol RIP (Routing Information Protocol) měl své první RFC vytvořeno v roce 1988 a to s pořadovým číslem 1058, avšak principy protokolu i některé jeho části byly používány již dříve, což mělo za důsledek existenci různých implementací zdánlivě téhož protokolu. RFC 1058 pak popisuje implementaci rozšířenou v programech Berkeley Software Distribution (BSD) a dnes v souvislosti s tímto RFC mluvíme o RIP verze 1, neboť v roce 1993 vzniklo nové RFC 1388 nesoucí doplňující informace k protokolu, který je zde však pojmenován jako RIP verze 2. Také toto RFC bylo aktualizováno a to o rok později (RFC 1723) a konečně také v roce 1998 v RFC 2453. Poslední zmíněné RFC bylo jako nejaktuálnější popis protokolu použito pro implementaci programů v úkolech 2 a 3. </p>
+<p>Vedle RIP verze 2, který je koncipován jako protokol používající IP verze 4, existuje také RIPng, což je implementace směrovacího protokolu RIP pro IP verze 6 s vlastním RFC 2080 vydaným roku 1997. RFC 2080 bylo druhým výchozím materiálem nutným k úspěšné implementaci programu z úkolu 2.</p>
+<h3>Popis protokolů RIP</h3>
+<p>Zde je několik výroků popisující vlastnosti protokolu RIP.<br>
+Základním kamenem protokolu je Bellmanův-Fordův algoritmus hledání nejkratší cesty v ohodnoceném grafu.<br>
+Ohodnocením hran grafu je počet hopů (skoků, směrovačů v cestě) od počátku k cíli, avšak s maximální hodnotou 15 hopů (0 je počátek, 16 je „nekonečno“). </p>
+<p>Každý směrovač uchovává kompletní informace o svém okolí v tzv. Směrovací tabulce.<br>
+Směrovače každých 30 vteřin rozesílají celou svou směrovací tabulku a to buď všesměrově(broadcast, RIP verze 1) nebo skupinově(multicast, RIP verze 2) a zároveň přijímají směrovací tabulky ostatních směrovačů v sítí a podle nich aktualizují záznamy své směrovací tabulky.</p>
+<p>Důsledky zmíněných výroků jsou následující. Jelikož je počet hopů omezen na 15, aby nedocházelo ke směrovacím smyčkám, je omezena také velikost sítě, ve které může být protokol použit.<br>
+Rozesílání celé směrovací tabulky každých 30 vteřin všemi směrovači zahlcuje síť (což však není až takový problém u malých sítí). Tento problém je částečně odstraněn u RIP verze 2, kde je rozesílání směrovacích tabulek provedeno skupinově (multicast). Některé implementace protokolu dokonce problém zcela odstranili tím, že směrovače vysílají své směrovací tabulky v různých časových intervalech.</p>
+<h2>Sniffer RIP a RIPng zpráv</h2>
+<p>Sniffer, neboli síťový analyzér, je síťová aplikace, která sleduje data putující po sítí nebo po její části a zachycuje je podle svého nastavení, aby z nich po dekódování získala informace pro uživatele.<br>
+Sniffer RIP a RIPng zpráv je nastaven tak, aby z proudu dat v síti odchytával pouze pakety protokolů RIP a RIPng (dále jen RIP), což v praxi znamená sledovat data proudící skrz síťové porty 520 (RIP) a 521 (RIPng). Ke sledování proudu dat na portech je v tomto případě využito rozhraní knihovny pcap (Packet Capture), která však již data neumí analyzovat a aplikaci předává všechny byty dat, tedy včetně hlaviček protokolů nižších modelových vrstev používaných protokolem RIP: Ethernet, IP a UDP. Aplikace musí znát strukturu či alespoň délku dat zmíněných vrstev, aby mohla úspěšně přistoupit k informacím o RIP. Dále bude ukázáno, jakým způsobem je použita knihovna pcap i jakým způsobem jsou analyzovány pakety.</p>
+<p>Nejdříve však pár obecných informací o implementovaném snifferu a základní popis programu. Jako programovací jazyk byl zvolen jazyk C++, ale program je možno snadným zásahem přepsat i do jazyka C. Součtem je program složen jen ze tří funkcí včetně funkce main a funkce pro výpis chybových hlášení a z devíti datových struktur popisujících přijatá síťová data. Kromě knihovny pcap není použita žádná nestandardní knihovna.</p>
+<p>Další popis bude rozdělen na část algoritmickou a část datovou.</p>
+<h4>Algoritmická část</h4>
+<p>Knihovna pcap má na svých internetových stránkách názorný tutoriál, díky kterému lze napsat právě tak jednoduchou aplikaci jako je Sniffer RIP a RIPng zpráv. Použití knihovny spočívá v otevření síťového zařízení, zkompilování a nastavení filtru dat, analýzy síťového provozu na otevřeném zařízení a nakonec uvolněním paměti. Analýza síťového provozu je vykonána knihovní funkcí pcap_loop, která jako jeden ze svých parametrů přebírá ukazatel na funkci (tzv. Callback funkci) definovanou uživatelem. Tato funkce, jež se v programu jmenuje got_packet, je stěžejní částí programu.</p>
+<p>Uvnitř funkce got_packet programátor definuje, jakým způsobem jsou data interpretována. Jedním z parametrů funkce je ukazatel na začátek odchycených dat, takže se pomocí jednoduché ukazatelové aritmetiky dá přistupovat k libovolným bytům dat. Protože známe velikost hlavičky protokolu Ethernet, ale nepotřebujeme informace v ní uložené, stačí tuto část „přeskočit“. Informace z hlavičky IP už však potřeba jsou a to hlavně pro určení verze tohoto protokolu, neboť podle verze IP se selektivně určí, jestli se bude dále zpracovávat protokol RIP nebo RIPng. IP verze 4 značí přítomnost protokolu RIP a IP verze 6 naopak protokolu RIPng. Avšak číslo verze protokolu IP je v datech reprezentováno pouze jedním nibble a je tedy jednoduše možno přečíst pouze jeden byte a z něj vzít první 4 bity udávající číslo verze. Následuje ukázka přečtení hodnoty verze IP.</p>
+<p></p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;"><span class="kw4">const</span> u_char <span class="sy0">*</span> vhl <span class="sy0">=</span><span class="br0">(</span>packet <span class="sy0">+</span> offset<span class="br0">)</span><span class="sy0">;</span>
+<span class="kw4">int</span> v <span class="sy0">=</span> <span class="br0">(</span><span class="kw4">int</span><span class="br0">)</span><span class="sy0">*</span> vhl <span class="sy0">&gt;&gt;</span> <span class="nu0">4</span><span class="sy0">;</span> <span class="co1">// 4 nebo 6</span></pre></div>
+<p>Na tomto příkladu je vidět ukazatelová aritmetika, kdy k počátku dat přičteme počet bytů, za kterým očekáváme požadovanou hodnotu. Přetypováním a bitovým posunem pak získáme použitelnou hodnotu.<br>
+Podobně jsou v programu interpretována všechna data, jen jsou mnohdy použity větší datové celky.<br>
+Interpretovaná data jsou příslušnou datovou funkcí vypsána na standardní výstup, čímž program naplňuje svůj úkol. Aplikace se ukončuje zasláním signálu SIGTERM.</p>
+<h4>Datová část</h4>
+<p>V příkladu uvedeném výše šlo o velmi jednoduchou ba dokonce o nejjednodušší datovou strukturu jazyka, o jeden byte. Na interpretaci RIP je ale potřeba složitějších struktur a ty jsou v programu samozřejmě definovány. Konkrétně pro protokol RIP jsou definovány tři datové struktury a pro RIPng dvě. Zde bude popsán pouze protokol RIP, protože RIPng je obdobný a po porozumění popisu RIP nebude problém porozumět i RIPng.</p>
+<p>Informace, které nese protokol RIP, jsou rozděleny na hlavičku (header) a pole záznamů o maximálním počtu 25, přitom záznam (entry) může být buď autentizační nebo berný (nosný, regulérní – jedná se o vlastní pojmenování). Přesný popis jednotlivých položek hlavičky i obou typů záznamů lze získat v příslušném RFC. Za zmínku však jistě stojí popis záznamu v jazyce C++, neboť se jedná o strukturu obsahující jednak typ záznamu a jednak datový typ union s dalšími dvěma strukturami. Stejná velikost obou typů záznamů totiž dává možnost tímto zápisem popsat oba typy jako jednu datovou strukturu, což je při vytváření pole důležitá vlastnost. V jazyce C++ ale při takovém způsobu zápisu vzniká problém s tzv. struct alignment, zarovnáváním velikostí jednotlivých datových typů uvnitř struktury a programátor by to měl mít na paměti.</p>
+<p>Zjednodušený zápis struktury části záznamu vypadá následovně.<br>
+</p>
+<div class="geshifilter"><pre class="c geshifilter-c" style="font-family:monospace;"><span class="kw4">struct</span> RIP_entry <span class="br0">{</span>
+	u_short address_family_id<span class="sy0">;</span> <span class="co1">// zjednodušeně: typ záznamu</span>
+	<span class="kw4">union</span> <span class="br0">{</span>
+		<span class="kw4">struct</span> <span class="br0">{</span>
+			u_short authentication_type<span class="sy0">;</span>
+			u_char authentication<span class="br0">[</span><span class="nu0">16</span><span class="br0">]</span><span class="sy0">;</span>
+		<span class="br0">}</span> authentication<span class="sy0">;</span>
+		<span class="kw4">struct</span> <span class="br0">{</span>
+			u_short route_tag<span class="sy0">;</span> <span class="co1">// or not used</span>
+			in_addr	network<span class="sy0">;</span>
+			in_addr netmask<span class="sy0">;</span> <span class="co1">// or not used</span>
+			in_addr nexthop<span class="sy0">;</span> <span class="co1">// or not used</span>
+			u_int32 metric<span class="sy0">;</span>
+		<span class="br0">}</span> regular<span class="sy0">;</span>
+	<span class="br0">}</span> type<span class="sy0">;</span>
+<span class="br0">}</span><span class="sy0">;</span></pre></div>
+<br>
+Pro úplnou představu o popisu protokolu RIP v jazyce C++ je potřeba nahlédnout do zdrojového kódu aplikace.
+<h3>Použití programu</h3>
+<h4>Spuštění programu</h4>
+<p><span class="geshifilter"><code class="bash geshifilter-bash">.<span class="sy0">/</span>myripsniffer <span class="re5">-i</span> interface</code></span></p>
+<p>Pro správný chod programu jsou často potřeba uživatelská práva správce.</p>
+<h4>Parametry programu</h4>
+<p><span class="geshifilter"><code class="text geshifilter-text">-i interface</code></span> ...zadání síťového rozhraní <em>interface</em>, na kterém se bude odposlouchávat.</p>
+<h2>Podvrhávač falešných RIP Response zpráv</h2>
+<p>Aplikace určená k podvrhování je ve své podstatě útočný software s cílem oklamat řídící program směrovače tak, aby mezi záznamy své směrovací tabulky zařadil záznam útočníkův záznam. Jelikož jsou však všechny příchozí záznamy směrovačem pečlivě kontrolovány, musí být falešný záznam formálně správný, takže mu směrovač uvěří. Pokud navíc směrovač používá autentizační mechanizmy, je potřeba zajistit také úspěšnou autentizaci falešné zprávy směrovače (k tomu poslouží aplikace Sniffer popsaná výše).</p>
+<p>Program aplikace ale není nikterak obtížné vytvořit. Zde popsaný program si vystačil se dvěmi funkcemi, jedné pro výpis chybového hlášení a druhou je funkce main. Funkce main je za to poměrně obsáhlá a obsahuje celou obsluhu podvrhávače, ale díky této její vlastnosti je výsledný kód jednoduchého programu přehlednější. Datové struktury jsou v programu definovány pouze dvě a jsou převzaty z programu Sniffer uvedeného výše. Jedná se o struktury pro práci s protokolem RIP verze 2.</p>
+<p>Zajímavým problémem při řešení se stal převod hodnoty CIDR udávající masku podsítě na řetězec čtyř bytových čísel, tedy podoby IP adresy verze 4. Řešení bitovým posunem je nabíledni a také bylo použito. 32-bitové číslo IP adresy vytvoříme z hodnoty CIDR následujícím příkazem.</p>
+<p><span class="geshifilter"><code class="c geshifilter-c">ip_num <span class="sy0">=</span> htonl<span class="br0">(</span>~<span class="nu0">0</span> <span class="sy0">&lt;&lt;</span> <span class="br0">(</span><span class="nu0">32</span> – CIDR<span class="br0">)</span><span class="br0">)</span><span class="sy0">;</span></code></span></p>
+<p>Funkce htonl je zde důležitá, neboť bez ní by bylo pořadí bitů ve výsledném čísle obráceně.</p>
+<p><strong>Pozn.:</strong> Jelikož na referenčním počítači se systémem FreeBSD program pracuje správně i bez parametru -i (nepovinný dodatečně přidaný parametr), nebyl tento parametr v programu implementován.</p>
+<h3>Popis vytvoření a poslání falešné zprávy</h3>
+<p>Při vytváření falešné zprávy je záhodno mít úplnou kontrolu nad obsahem zprávy, tedy datech protokolu RIP. Tato činnost by se dala popsat takto: Deklaruj datovou strukturu protokolu, naplň tuto strukturu potřebnými daty a vytvoř otisk struktury ve formě řetězce bytů o délce původní struktury. Jelikož jsou v implementaci data rozdělena na hlavičku a tělo, provede se tato činnost dvakrát.</p>
+<h3>Použití programu</h3>
+<h4>Spuštění programu</h4>
+<p><span class="geshifilter"><code class="bash geshifilter-bash">.<span class="sy0">/</span>myripresponse <span class="re5">-r</span> IPv4<span class="sy0">/</span><span class="br0">[</span><span class="nu0">8</span>-<span class="nu0">30</span><span class="br0">]</span> <span class="br0">{</span>-n Ipv4<span class="br0">}</span> <span class="br0">{</span>-m <span class="br0">[</span><span class="nu0">0</span>-<span class="nu0">15</span><span class="br0">]</span><span class="br0">}</span> <span class="br0">{</span>-t <span class="br0">[</span><span class="nu0">0</span>-<span class="nu0">65535</span><span class="br0">]</span><span class="br0">}</span> <span class="br0">{</span>-p heslo<span class="br0">}</span></code></span></p>
+<p>Pro správný chod programu jsou často potřeba uživatelská práva správce.</p>
+<h4>Parametry programu</h4>
+<p>Povinné<br>
+<span class="geshifilter"><code class="text geshifilter-text">-r Ipv4/[8-30]</code></span>   ...IP adresa Ipv4 a maska podsítě [8-30] ve tvaru CIDR, která bude podvrhnuta směrovači<br>
+Nepovinné<br>
+<span class="geshifilter"><code class="text geshifilter-text">-n Ipv4</code></span>	...IP adresa dalšího směrovače (next hop); pokud nezadáno použije se 0.0.0.0<br>
+<span class="geshifilter"><code class="text geshifilter-text">-m [1-15]</code></span>   ...hodnota metriky protokolu (hop) v rozsahu 1 až 15; pokud nezadáno použije se 1<br>
+<span class="geshifilter"><code class="text geshifilter-text">-t [0-65535]</code></span>  ...hodnota Router Tag protokolu; pokud nezadáno použije se 0<br>
+<span class="geshifilter"><code class="text geshifilter-text">-p heslo</code></span>	...heslo k autentizaci směrovače; není-li zadáno heslo předpokládá se nepoužití autentizace</p>
+<h2>Povrhávač falešných RIP Request zpráv</h2>
+<p>Program pro zasílání falešných Request zpráv protokolu RIP je implementačně velmi podobný podvrhávači Response zpráv. Jediným rozdílem jsou jiné data zprávy, tedy jiné hodnoty datové struktury popisující protokol RIP. </p>
+<p>RFC 2453 hovoří o zasílání Request zpráv na multicast i o zasílání vybraným směrovačům. Program implementuje obě varianty, přičemž rozdíl spočívá jen ve změně adresy a portu. Při zasílání Request zprávy jednomu routeru je totiž nutné použít jiné číslo portu zdroje zprávy než je standardní číslo portu protokolu RIP 520. Z toho vyplývají i parametry programu a jejich omezení.</p>
+<h3>Použití programu</h3>
+<h4>Spuštění programu</h4>
+<p><span class="geshifilter"><code class="bash geshifilter-bash">.<span class="sy0">/</span>myriprequest <span class="br0">{</span>-r Ipv4 <span class="re5">-p</span> port<span class="br0">}</span></code></span></p>
+<p>Pro správný chod programu jsou často potřeba uživatelská práva správce.</p>
+<h4>Parametry programu</h4>
+<p>Nepovinné<br>
+<span class="geshifilter"><code class="text geshifilter-text"> Ipv4</code></span>	...IP adresa směrovače, kterému bude zaslána RIP Request zpráva<br>
+<span class="geshifilter"><code class="text geshifilter-text">-p port</code></span>	...Číslo portu, ze kterého se bude zpráva odesílat. Nesmí být rovno 520.<br>
+Oba parametry musí být uvedeny současně ve stanoveném pořadí.</p>
+<h2>Aplikace programů provedením útoku na směrovač</h2>
+<p>Pro úspěšný útok na směrovač používající protokol RIP verze 2 jsou potřeba programy myripsniffer a myripresponse. Prvním zmíněným programem útočník zjistí informace o směrovači, včetně autentizačního hesla, neboť způsob autentizace je u protokolu RIP verze 2 vždy pomocí nešifrovaného hesla. Další informace již prakticky nejsou potřeba a pro úspěšný útok stačí použít výchozí hodnoty programu myripresponse. Ten samozřejmě jako parametr požaduje alespoň podvrhovanou IP adresu a adresu masky podsítě.</p>
+<h3>Postup útoku</h3>
+<p>Pokud není uvedeno jinak, může být nutno spouštět aplikace jako správce systému (root).<br>
+Příklad útoku bude konkrétní a autentický. Použité síťové rozhraní je vmnet1. </p>
+<h4>1. Odchyt paketů na síťovém rozhraní</h4>
+<p>Příkaz: <span class="geshifilter"><code class="bash geshifilter-bash">.<span class="sy0">/</span>myripsniffer <span class="re5">-i</span> vmnet1</code></span><br>
+Vybrané informace z výstupu:</p>
+<ul>
+<li>
+Paket od fe80::20c:29ff:feca:480d, protokol RIPng<br>
+Přijaté záznamy (jen adresy, u všech je Route Tag 0, Metric 1):<br>
+fd00::, fd00:a6:3660::, fd00:153:1848::, fd00:c80:38::, fd00:332a:2fb2::
+</li>
+<li>
+Paket od 192.168.12.128, protokol RIP verze 2,<br>
+Autentizace heslem, heslo: ISA&gt;2a431d693ba<br>
+Přijaté záznamy (u všech Metric 1, Subnet mask 255.255.255.0):<br>
+10.0.0.0, 10.50.106.0, 10.110.111.0, 10.118.111.0, 10.221.116.0
+</li>
+<li>
+Paket od 10.0.0.1, protokol RIP verze 2,<br>
+Autentizace heslem, heslo: ISA&gt;2a431d693ba<br>
+Přijaté záznamy (u všech Metric 1, Subnet mask 255.255.255.0):<br>
+10.50.106.0, 10.110.111.0, 10.118.111.0, 10.221.116.0
+</li>
+</ul>
+<p>Získali jsme heslo, díky kterému bude možno poslat falešnou routu.</p>
+<h4>2. Zaslání falešné zprávy RIP Response</h4>
+<p>Příkaz: <span class="geshifilter"><code class="bash geshifilter-bash">.<span class="sy0">/</span>myripresponse <span class="re5">-r</span> 10.10.10.0<span class="sy0">/</span><span class="nu0">24</span> <span class="re5">-p</span> “ISA<span class="sy0">&gt;</span>2a431d693ba“</code></span></p>
+<p>Zda-li se útok povedl, je třeba se přesvědčit ve směrovači. V tomto případě se povedl. Program myripresponse zaslal jediný paket se zprávou zabalenou v UDP datagramu. Při neúspěšném útoku je tedy dobré zkusit program spustit znovu, protože se může stát, že díky protokolu UDP nebude paket v pořádku doručen.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://www.faqs.org/rfcs/rfc2453.html">RFC2453 - RIP version 2. 1998.</a>        </div>
+              <div class="field-item even">
+                    <a href="http://www.faqs.org/rfcs/rfc2080.html">RFC2080 - RIPng for Ipv6, 1997.</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://www.faqs.org/rfcs/rfc2460.html">RFC2460 - Internet Protocol, Version 6 (IPv6) Specification. 1998.</a>        </div>
+        </div>
+</div>
+</fieldset>
+

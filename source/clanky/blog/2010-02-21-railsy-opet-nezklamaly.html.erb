@@ -1,0 +1,50 @@
+---
+title: Railsy opět nezklamaly
+date: 2010-02-21 09:57
+layout: blog
+comments: false
+---
+
+      <p>Když teď převádím uživatele ze staré galerie vystavuj.cz do její nové verze, kterou píšu v Ruby on Rails, nemůžu nepochválit railsy a tím pádem i jazyk Ruby. Nebude to žádná óda, ale musím (prostě musím) napsat, jak mi railsy celou věc usnadnily.</p>
+<p>Převod jen tak mezi databázemi nebyl zcela možný, neboť mě odradila databáze galerijního programu Gallery2. Zkrátka jsem si řekl, že uživatele převedu parsováním stávajícího webu, stažením obrázků a následným vložením toho všeho do databáze.</p>
+<p>A teď přišlo první rozhodování, jaký jazyk zvolit? Ruby? Python? Perl? Ne, Perl ne. V Ruby ještě nejsem takový mazák, ale bylo by to fajn. V Pythonu jsem psal větší projekt tohoto typu. Zvítězil Python. Když se ohlédnu, nevím, jestli jsem udělal nejlíp, ale nechci mu křivdit. Nebyla to zase taková hrůza, k čemuž přispěla hlavně knihovna lxml. Pracoval jsem tak trochu agilním stylem. Napsal jsem skript na část dat (např. adresy jednotlivých galerií), ty stáhl, zkontroloval a skript přepsal na další část dat (obrázky v galeriích). A tak stále dokola, dokud jsem neměl všechno. Snad by mě to netrvalo celý den, kdybych se nezasekal na Unicode a překladu šŠ na ss. Ten jsem mimochodem musel nakonec udělat ručně.<br>
+Na skriptech není nic zvláštního, přesto malá ukázka zde<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">for</span> page <span class="kw1">in</span> pages_list:
+    tree = open_and_parse<span class="br0">(</span>page.<span class="me1">strip</span><span class="br0">(</span><span class="br0">)</span><span class="br0">)</span>
+    links = tree.<span class="me1">findall</span><span class="br0">(</span><span class="st0">'.//a[@href]'</span><span class="br0">)</span>
+    <span class="kw1">for</span> link <span class="kw1">in</span> links:
+        link.<span class="me1">make_links_absolute</span><span class="br0">(</span>base<span class="br0">)</span>
+        <span class="co1"># search in links</span>
+        href = link.<span class="me1">get</span><span class="br0">(</span><span class="st0">'href'</span><span class="br0">)</span>
+        <span class="kw1">if</span> <span class="kw3">re</span>.<span class="me1">search</span><span class="br0">(</span><span class="st0">'<span class="es0">\/</span>vystava<span class="es0">\/</span>[^/]*/$'</span>, href<span class="br0">)</span>: <span class="co1"># regul matches</span>
+           final.<span class="me1">append</span><span class="br0">(</span>href+<span class="st0">"<span class="es0">\n</span>"</span><span class="br0">)</span> <span class="co1"># get URL</span>
+<span class="kw2">list</span><span class="br0">(</span><span class="kw2">set</span><span class="br0">(</span>final<span class="br0">)</span><span class="br0">)</span> <span class="co1"># my little uniq</span>
+galleries_FILE = <span class="kw2">open</span><span class="br0">(</span>galleries_file, <span class="st0">"w"</span><span class="br0">)</span>
+galleries_FILE.<span class="me1">writelines</span><span class="br0">(</span>final<span class="br0">)</span></pre></div>
+<br><br>
+Lepší část přijde teď. Výsledné xml s daty se musí dát do databáze. Znovu Python? Ne, prosím (ale málem jsem v něm začal). Věděl jsem, že mně práci usnadní, když budu pracovat přes definovaný model galerie a všechno, co jsem potřeboval, se skrývalo v Railovském skriptu <strong>runner</strong>, který nabootoval Railsy, tedy celou galerii a umožnil mi vytvářet uživatele, galerie a obrázky jako bych pracoval v kontroléru. To je úžasné! Nemusel jsem vymýšlet SQL příkazy, model data zvalidoval, vytvořil všechny cizí klíče....
+<p>Jen ještě jedna věc. V tom xml byly jen URL obrázků. Jak je stáhnout a "uploadovat" do galerie? I na tento problém jsem vygooglil <a href="http://almosteffortless.com/2008/12/11/easy-upload-via-url-with-paperclip/" title="Easy Upload via URL with Paperclip">lék</a>. Hezky Railovsky vyřešený upload přes URL, který jsem do modelu začlenil během krátké chvíle. Nyní stačilo jen spustit skript přes <strong>runner</strong> a xml se uložilo do databáze. Díky, Ruby on Rails, jste parádní.</p>
+<p>Můj skript vypadal nějak takto<br>
+</p>
+<div class="geshifilter"><pre class="ruby geshifilter-ruby" style="font-family:monospace;"><span class="co1">#!/usr/bin/env /home/fanda/www/ruby/vystavuj/script/runner</span>
+<span class="kw3">require</span> <span class="st0">'xmlsimple'</span>
+vystavuj = <span class="kw4">XmlSimple</span>.<span class="me1">xml_in</span><span class="br0">(</span><span class="st0">'vyla.xml'</span><span class="br0">)</span>
+vystavuj<span class="br0">[</span><span class="st0">'artists'</span><span class="br0">]</span>.<span class="me1">each</span> <span class="kw1">do</span> <span class="sy0">|</span>artist<span class="sy0">|</span>
+  <span class="kw3">puts</span> artist<span class="br0">[</span><span class="st0">'name'</span><span class="br0">]</span>
+  <span class="kw1">if</span> User.<span class="me1">find_by_name</span><span class="br0">(</span>artist<span class="br0">[</span><span class="st0">'name'</span><span class="br0">]</span><span class="br0">)</span>
+    <span class="kw1">next</span>
+  <span class="kw1">end</span>
+  <span class="co1"># generování hesla</span>
+  chars = <span class="br0">(</span><span class="st0">"a"</span>..<span class="st0">"z"</span><span class="br0">)</span>.<span class="me1">to_a</span> <span class="sy0">+</span> <span class="br0">(</span><span class="st0">"A"</span>..<span class="st0">"Z"</span><span class="br0">)</span>.<span class="me1">to_a</span> <span class="sy0">+</span> <span class="br0">(</span><span class="st0">"0"</span>..<span class="st0">"9"</span><span class="br0">)</span>.<span class="me1">to_a</span>
+  pass = <span class="st0">""</span>
+  1.<span class="me1">upto</span><span class="br0">(</span><span class="nu0">10</span><span class="br0">)</span> <span class="br0">{</span> <span class="sy0">|</span>i<span class="sy0">|</span> pass <span class="sy0">&lt;&lt;</span> chars<span class="br0">[</span><span class="kw3">rand</span><span class="br0">(</span>chars.<span class="me1">size</span><span class="sy0">-</span><span class="nu0">1</span><span class="br0">)</span><span class="br0">]</span> <span class="br0">}</span>
+ 
+  xpars = <span class="br0">{</span> <span class="re3">:name</span> <span class="sy0">=&gt;</span> artist<span class="br0">[</span><span class="st0">'username'</span><span class="br0">]</span><span class="br0">[</span><span class="nu0">0</span><span class="br0">]</span>,
+            <span class="re3">:password</span> <span class="sy0">=&gt;</span> pass,
+            <span class="re3">:password_confirmation</span> <span class="sy0">=&gt;</span> pass,
+            <span class="re3">:email</span> <span class="sy0">=&gt;</span> artist<span class="br0">[</span><span class="st0">'email'</span><span class="br0">]</span><span class="br0">[</span><span class="nu0">0</span><span class="br0">]</span>       <span class="br0">}</span>
+  user = User.<span class="me1">create</span><span class="br0">(</span>xpars<span class="br0">)</span>
+  <span class="co1">#následuje přidání profilových informací a obrázků</span>
+<span class="kw1">end</span></pre></div>
+

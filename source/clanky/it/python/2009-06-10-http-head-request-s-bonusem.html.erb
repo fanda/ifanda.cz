@@ -1,0 +1,66 @@
+---
+title: Http HEAD request s bonusem
+date: 2009-06-10 18:29
+layout: article
+comments: false
+tags: [it, python]
+geshifilter: true
+---
+<p>Jako User agenta pro http požadavky v jazyce Python používám opener z modulu <em>urllib2</em>. Jeho použití je jednoduché a opener má poměrně inteligentní návrh. Nedokázal jsem však najít způsob, jak pomocí něj uskutečnit HEAD požadavek na danou internetovou stránku. Podařilo se mi to až s modulem <em>httplib</em> a to po dlouhém hledání.</p>
+SPLIT
+<h2>httplib</h2>
+<p>Použití <em>httplib</em>, stejně jako použití jiných komponent krajtí knihovny, není těžké. Přesto si myslím, že mohlo být ještě více intuitivnější a záhy vysvětlím proč. Nejdříve si totiž musíme importovat modul do programu.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">import</span> <span class="kw3">httplib</span></pre></div>
+<br>
+Nyní je řešení jen na pár řádků programu. Vytvoří se objekt, který obstará spojení se serverem a pak se metodou <em>.request</em> nastaví parametry http požadavku. Minimálně je potřeba zadat typ požadavku (HEAD) a relativní umístění dokumentu na serveru.  Požadavek je vykonán metodou <em>.getresponse</em>, jež vrátí instanci objektu HTTPResponse.<br>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;">connection = <span class="kw3">httplib</span>.<span class="me1">HTTPConnection</span><span class="br0">(</span><span class="st0">"ifanda.cz"</span><span class="br0">)</span> <span class="co1"># bez http://</span>
+connection.<span class="me1">request</span><span class="br0">(</span><span class="st0">"HEAD"</span>, <span class="st0">"/clanky"</span><span class="br0">)</span>
+header = conn.<span class="me1">getresponse</span><span class="br0">(</span><span class="br0">)</span>
+header.<span class="me1">status</span> <span class="co1"># vypíše kód stavu požadavku, tedy 200</span>
+header.<span class="me1">msg</span>.<span class="me1">gettype</span><span class="br0">(</span><span class="br0">)</span> <span class="co1"># vypíše MIME type </span>
+<span class="co1"># print dir(header.msg) # co všechno z hlavičky zjistíme</span></pre></div>
+<br>
+Hotovo po 4 řádcích kódu a já si stěžuji, že je to málo intuitivní. Ano, klidně bych si totiž dokázal představit, že by metoda <em>.request</em> příjmala jako druhý parametr celou URL. Takto, pokud máme na začátku zadanou celou URL, musíme ji před použitím zpracovat na jednotlivé díly. Naštěstí k tomuto účelu existuje modul <em>urlparse</em>.
+<h2>urlparse</h2>
+<p>Jak už název napovídá, <em>urlparse</em> je modul pro zpracování URL, tedy adres přesně určujících jednotlivé zdroje v Internetu. Pro jednoduché použití stačí jedna funkce, konktrétně <em>urlsplit()</em>, která vrací tuple jednotlivých částí zadané URL.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">from</span> <span class="kw3">urlparse</span> <span class="kw1">import</span> urlsplit
+url_tuple = urlsplit<span class="br0">(</span><span class="st0">"http://ifanda.cz/clanky/index.php?sekce=python#NEEXISTUJE"</span><span class="br0">)</span>
+<span class="kw1">print</span> url_tuple</pre></div>
+<br>
+Co je tedy nyní uchováno v tuple url_tuple? Funkce <em>urlsplit()</em> zadanou adresu zparsuje na<br>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="br0">(</span><span class="st0">"http"</span>, <span class="st0">"ifanda.cz"</span>, <span class="st0">"/clanky/index.php"</span>, <span class="st0">"sekce=python"</span>, <span class="st0">"NEEXISTUJE"</span><span class="br0">)</span></pre></div>
+<br>
+Z toho jde pěkně vidět, jak <em>urlsplit()</em> funguje. Popsanou tabulku hodnot v tuple, lze najít za jedním z odkazů na konci článku.
+<h2>httplib a urlparse společně</h2>
+<p>Na závěr vytvořím funkci, která oba moduly spojí dohromady. Aby měla funkce smysl, řekněme, že bude zjišťovat MIME typ souboru, který je identifikován pomocí URL. Samozřejmě využiji všechny postupy popsané výše.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">import</span> <span class="kw3">httplib</span>
+<span class="kw1">from</span> <span class="kw3">urlparse</span> <span class="kw1">import</span> urlsplit
+<span class="kw1">def</span> get_content_type<span class="br0">(</span> url <span class="br0">)</span>:
+    turl = urlsplit<span class="br0">(</span>url<span class="br0">)</span> <span class="co1"># použití urlparse</span>
+    conn = <span class="kw3">httplib</span>.<span class="me1">HTTPConnection</span><span class="br0">(</span>turl<span class="br0">[</span><span class="nu0">1</span><span class="br0">]</span><span class="br0">)</span>
+    conn.<span class="me1">request</span><span class="br0">(</span><span class="st0">"HEAD"</span>, <span class="st0">"/"</span> + turl<span class="br0">[</span><span class="nu0">2</span><span class="br0">]</span> + <span class="st0">"?"</span> + turl<span class="br0">[</span><span class="nu0">3</span><span class="br0">]</span><span class="br0">)</span>
+    header = conn.<span class="me1">getresponse</span><span class="br0">(</span><span class="br0">)</span>
+    <span class="kw1">return</span> header.<span class="me1">msg</span>.<span class="me1">gettype</span><span class="br0">(</span><span class="br0">)</span></pre></div>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://www.python.org/doc/2.5.2/lib/module-urlparse.html">Popis modulu urlparse</a>        </div>
+              <div class="field-item even">
+                    <a href="http://docs.python.org/library/httplib.html">Popis modulu httplib</a>        </div>
+        </div>
+</div>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="/clanky/python/pouziti-parseru-lxml-pro-html">Použití openeru pro získání WWW stránky</a>        </div>
+        </div>
+</div>
+</fieldset>
+

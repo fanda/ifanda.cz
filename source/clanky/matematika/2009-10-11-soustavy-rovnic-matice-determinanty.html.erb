@@ -1,0 +1,83 @@
+---
+title: Soustavy rovnic, matice a determinanty
+date: 2009-10-11 00:35
+layout: article
+comments: false
+tags: [matematika]
+geshifilter: false
+---
+<p>Výpisek z diskrétní matematiky o soustavách rovnic s neznámými, o maticích a determinantech.</p>
+SPLIT
+<h2>Lineární rovnice</h2>
+<ul>
+<li>
+<ul>Homogenní
+<li>všechny absolutní členy rovny 0</li>
+<li>vždy má řešení a to uspořádanou n-tici</li>
+<li>význam parametru</li>
+<li>volné a vázané neznámé</li>
+</ul>
+</li>
+<li>Nehomogenní</li>
+</ul>
+<p>Počet neznámých = počet rovnic = počet řešení</p>
+<h3>Matice</h3>
+<p>= obdélníkové schéma/tabulka<br>
+ rozměr: počet řádků / počet sloupů = m / n; pokud m=n jde o čtvercovou matici</p>
+<ul>typy:
+<li>nulová = všechny prvky matice jsou nulové</li>
+<li>Diagonální = nenulové jsou pouze prvky na hlavní diagonále</li>
+<li>Jednotková = diagonální matice, jež má všechny prvky diagonály rovny jedné</li>
+<li>Trojúhelníková horní = nulové jsou všechny prvky <strong>pod</strong> hlavní diagonálou</li>
+<li>Trojúhelníková dolní = nulové jsou všechny prvky <strong>nad</strong> hlavní diagonálou</li>
+</ul>
+<p>Pokud se v matici(soustavě rovnic) nachází řádek, který je lineární kombinací jiných řádků, může být z matice odstraněn, neboť je nadbytečný a nemá vliv na řešení matice(soustavy rovnic).<br>
+<strong>Hodnost matice</strong> = počet lineárně nezávislých řádků matice, výpočet např. pomocí GEM, v závislosti na parametru</p>
+<p> Sčítání matic: POUZE pro matice stejných rozměrů. Sčítání prvků odpovídajících si pozic. c(i,j) = a(i,j) + b (i,j)<br>
+ Součin matic: POUZE matice typu m/p a p/n v tomto pořadí; viz pomůcka:  A(m,p) + B(p,n) = C(m,n), přičemž c(i,j) = ∑(k=1..p) a(i,p) x b(p,j)<br>
+<strong>Matice transponovaná</strong> = záměna řádků a sloupců (při stejné hodnotě determinantu)</p>
+<ul>
+<strong>Inverzní matice</strong>
+<li>A x A‭inv = E (tj. jednotková matice)</li>
+<li>Postup výpočtu pomocí GEM</li>
+<li>Možný výpočet pomocí determinantu</li>
+<li>Matice regulární a singulární</li>
+</ul>
+<h3>Determinant matice</h3>
+<p><strong>Determinant matice je číslo</strong><br>
+ výpočet determinantu 2. řádu pomocí křížového pravidla<br>
+ výpočet determinantu 3. řádu pomocí Sarrussova pravidla<br>
+ vyšší řády pomocí Laplaceova rozvoje</p>
+<ul>typy čtvercových matic:
+<li>Singulární matice - její determinant je roven nule =&gt; rovnoběžnostěn má nulový objem</li>
+<li>Regulární matice - její determinant je různý od nuly</li>
+</ul>
+<p><strong>Při výměně dvou řádků nebo dvou sloupců se znaménko determinantu změní na opačné!!!</strong></p>
+<h3>Gaussova eliminace</h3>
+<p>- způsob řešení soustavy rovnic postupným upravováním matice do tvaru, kdy jsou pod hlavní diagonálou matice jen nuly. V takovém tvaru matice jednoduše zjistíme řešení soustavy rovnic.</p>
+<ul>Pro eliminaci proměných z jednotlivých řádků matice jsou povoleny následující operace:
+<li>Násobení/dělení jednotlivých řádků nenulovým číslem</li>
+<li>Prohazování jednotlivých řádků matice</li>
+<li>Přičítání násobků jednotlivých řádků jiným řádkům</li>
+</ul>
+<ol>Kroky v příkladu třířádkové matice:
+<li>Ostranění proměné x z 2. a 3. řádku</li>
+<li>Odstranění y ze třetího řádku</li>
+<li>Dosazení z ze třetího řádku do vyšších řádků</li>
+</ol>
+<p>Výsledkem je rozšířená matice, která má na diagonále samé jedničky a v posledním sloupci jsou řešení pro jednotlivé proměné.</p>
+<h3>Frobeniova věta</h3>
+<p>Nehomogenní soustava lineárních rovnic má alespoň jedno řešení právě tehdy když hodnost matice soustavy je rovna hodnosti rozšířené matice soustavy.</p>
+<h3>Cramerovo pravidlo</h3>
+<p>= metoda řešení soustavy lineárních rovnic pomocí determinantu.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/matematika/moznosti-vypoctu-soustavy-rovnic-pomoci-matice-ci-determinantu">Možnosti výpočtu soustavy rovnic pomocí matice či determinantu</a>        </div>
+        </div>
+</div>
+</fieldset>
+

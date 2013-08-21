@@ -1,0 +1,10 @@
+- wrap_layout :layout do
+  %h1 video aly
+  %article{"style"=>"display: block"}
+    %header
+      %h1
+        = current_article.title
+        %time= current_article.date.strftime('%e. %_m. %Y')
+    = yield
+    %footer
+

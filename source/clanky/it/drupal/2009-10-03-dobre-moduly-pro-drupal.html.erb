@@ -1,0 +1,53 @@
+---
+title: Dobré moduly pro drupal
+date: 2009-10-03 18:00
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: false
+---
+<p>Protože mě čím dál víc lidí žádá o práci spojenou s Drupalem, chtěl bych přiblížit, které moduly Vám s Drupalem usnadní práci. Zjistíte, že Drupal opravdu není jen pro programátory, ale že je to vysoce konfigurovatelné a vyspělé CMS.<br>
+Budeme se bavit o aktuální stabilní verzi Drupalu, což je verze 6. Drupal 6 má sice v základní instalaci hodně velmi užitečných modulů, avšak vždy je třeba stáhnout několik modulů, které nám i našim návštěvníkům usnadní další práci s webovou stránkou.</p>
+<h2>CCK</h2>
+<p>Content Construction Kit (CCK) neboli "Sada pro vytváření obsahu" je jedním ze základních modulů, který by žádnému drupalistovi neměl chybět. Obsahuje pokročilé rozhraní pro tvorbu uzlů (nodes) a tím nám pomáhá definovat pole nejrůznějších druhů, pomocí nichž pak můžeme jednoduše vytvářet vlastní rozličné typy obsahu (tj. článek, předmět v obchodě apod.). Možností je hodně, přestože opět nejsou všechny v základním balíčku a některé je potřeba dodatečně stáhnout. Při tvorbě vlastních typů obsahu se dají nadefinovat, jak základní pole jakými jsou například <em>Text</em> (prostě textové pole), <em>Number</em> (řádek pro ukládání čísel, třeba telefonních), <em>Option Widgets</em> (standardní radio buttony, checkboxy a podobně) nebo třeba <em>Link</em> (vytvoří potřebná pole pro vkládání odkazů oddělených od textu). Dále lze stáhnout a aktivovat doplňující typy polí, které lze s výhodou použít. V praxi se mi velmi osvědčila <em>Node Reference</em>, což je pole, kde se zobrazují odkazy na relevantní uzly (články), které se vyskytují na Vašich stránkách. Při vytváření uzlu, je výběr relevantních článků zobrazen jako "samosedoplňující" (autocomplete) pole, které Vám automaticky nabízí jména uzlů v průběhu psaní. Další možnosti polí jsou <em>Image Field</em> (vkládání obrázku), <em>Email</em> a další.<br>
+CCK nabízí také sdružování jednotlivých polí do skupin - <em>Fieldgroup</em>, export/import již definovaných polí nebo nastavení přístupových práv polí jednotlivým skupinám uživatelů. Vše se dá samozřejmě libovolně kombinovat.<br>
+<a href="http://drupal.org/project/cck" title="Oficiální stránky Drupalovského modulu CCK">Odkaz na stránky modulu CCK (zde si můžete stáhnout modul)</a></p>
+<h2>Pathauto</h2>
+<p>Modul Pathauto (automatické vytváření cesty) je velmi užitečný modul, který by neměl chybět v žádné instalaci Drupalu. Vlastně nechápu, proč se tento modul nedistribuuje v hlavním instalačním balíčku Drupalu. Pathauto je vlastně nadstavba modulu Path (Path dovoluje uživatelům určit URL právě vytvářeného uzlu), která pěkné URL obsahu vytváří automaticky, podle předem definovaných pravidel. Tyto pravidla určíte pomocným modulem Token (také není v základní instalaci!) v nastavení Pathauto a dál se již nemusíte starat o vytváření URL stránek.<br>
+Uveďme příklad. Chcete vytvořit blogovací systém pro uživatele a chcete, aby se do adres jednotlivých příspěvků přidávala jména autorů (například http://příklad.tld/blog/fanda/titulek-meho-prispevku). S modulem Pathauto stačí v nastavení URL aliasů (Automatické aliasy stránek) do kolonky s typem obsahu Příspěvek do blogu napsat <strong>blog/[user-raw]/[title-raw]</strong>, kde výrazy v hranatých závorkách jsou tokeny (prvky modulu Token). </p>
+<p><img src="/sites/default/files/pictures/drupal/pathauto.png" alt="Setting Pathauto module"></p>
+<p>Výběr povolených tokenů máte hned pod tímto nastavením a je možno je libovolně kombinovat. URL bude vypadat přesně tak, jak ji nadefinujete.<br>
+<a href="http://drupal.org/project/pathauto" title="Oficiální stránky Drupalovského modulu Pathauto">Odkaz na stránky modulu Pathauto (zde si můžete stáhnout modul)</a><br>
+<a href="http://drupal.org/project/token" title="Oficiální stránky Drupalovského modulu Token">Budete potřebovat také modul Token (zde si můžete stáhnout modul)</a></p>
+<h2>ImageCache</h2>
+<p>Nyní si představíme výborný modul pro práci s obrázky. Tímto drupalovským modulem je ImageCache. Princip jeho činnosti je jednoduchý. Po instalaci modulu do Drupalu si nadefinujeme jednotlivé předvolby neboli <em>presets</em>. Podle těchto předvoleb, bud ImageCache všechny nahrávané obrázky upravovat a pro každý preset se vytvoří nový ale upravený obrázek. Samozřejmě se uloží i ten původní, v nezměněné formě. Lépe se to vysvětlí na příkladu. Pro svou galerii obrázků potřebujete vytvořit dva různě veliké náhledy, malý thumbnail a obrázek, který se bude zobrazovat místo původního, jenž by se nemusel vlézt na obrazovku. V ImageCache vytvoříte dva presety s danými vlastnostmi obrázků.</p>
+<p><img src="/sites/default/files/pictures/drupal/image_cache_set.png" alt="ImageCache set page"></p>
+<p>Například vytvořme černobílý thumbnail o velikosti 120x120 pixelů a další preset pro obrázek, jehož šířka nepřekročí 800 pixelů. </p>
+<p><img src="/sites/default/files/pictures/drupal/edit_preset.png" alt="Editting ImageCache Preset"><br>
+Poté přejdeme do nastavení Typy Obsahu a pro typ obsahu, jehož součástí obrázek bude, klikneme na Display Fields a vybereme preset thumbnail pro zobrazení v módu Teaser a preset obrázek pro mód Full Node.</p>
+<p><img src="/sites/default/files/pictures/drupal/display_fields.png" alt="Setting fields to display"></p>
+<p>A to je vše. Od teď se, navždy a ke každému uzlu takto nastaveného typu, budou vytvářet další dva obrázky upravené podle nastavení ImageCache a pak se budou zobrazovat podle nastavení Display Fields. Je třeba ale mít na paměti, že tyto obrázky bude ImageCache vytvářet až s prvním požadavkem na jejich zobrazení a nemusí se tím pádem vytvořit nikdy. Důsledkem toho se první zobrazení obrázků může trochu prodloužit, což je to dáno tím, že je ImageCache musí nejprve vytvořit.<br>
+Jak při vytváření presetů, tak při nastavení zobrazování obrázků si povšimněte, kolik možností ImageCache nabízí. Je jich opravdu hodně.<br>
+<a href="http://drupal.org/project/imagecache" title="Oficiální stránky Drupalovského modulu ImageCache">Odkaz na stránky modulu ImageCache (zde si můžete stáhnout modul)</a><br>
+Pozor! ImageCache ke svému běhu potřebuje modul ImageApi<br>
+<a href="http://drupal.org/project/imageapi" title="Oficiální stránky Drupalovského modulu ImageApi">Odkaz na stránky modulu ImageApi (zde si můžete stáhnout modul)</a></p>
+<h2>Backup and Migrate</h2>
+<p>U webových stránek se často zapomíná na zálohování. Hlavně před každou aktualizací modulů Drupalu nebo před spuštěním skriptu update.php, bychom měli zálohovat celou databázi. Drupalovský modul Backup and Migrate (BaM) nám tuto činnost velmi usnadňuje a dokonce ji umí i automatizovat. Jeho rozhraní je velmi jednoduché a možností je opět hodně.<br>
+Dají se zálohovat jen určité tabulky databáze, může se nařídit nezálohovat data z některých tabulek jako například z tabulky cache, podopora komprese SQLdumpu do archívu typu Zip nebo GZip nebo BZip a další. Zálohu si buď můžete stáhnout nebo ji BaM uloží na diskový prostor stránek.<br>
+Modul podporuje také opačnou operaci, obnovení databáze ze zálohy. Stačí jen vybrat soubor s zálohou a Backup and Migrate si s ní už poradí.<br>
+<strong>S výhodou se dá BaM používat při přesunu webu z vývojového do produkčního prostředí. Jednoduše na serveru nainstalujete nový Drupal, nahrajete soubory všech modulů a témat, která používáte a obnovíte databázi Drupalu ze zálohy svého vývojového prostředí. Změny se projeví okamžitě.</strong><br>
+Také plánování záloh je možnost, kterou se vyplatí využít, pokud Vám databáze nezálohuje poskytovatel hostingu. Nastavit se dá v tomto případě interval záloh v hodinách a maximální počet záloh, které budou uloženy.<br>
+<a href="http://drupal.org/project/backup_migrate" title="Oficiální stránky Drupalovského modulu Backup and Migrate">Odkaz na stránky modulu Backup and Migrate (zde si můžete stáhnout modul)</a></p>
+<h2>Závěr</h2>
+<p>Zmíněné moduly do Drupalu byste opravdu neměli minout. Jejich používání přináší mnoho výhod nejen Vám ale i Vašim návštěvníkům. Ulehčují práci s Drupalem a dokazují, že Drupal není CMS jen pro programátory, jak se říká.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/instalace-dodatecnych-modulu-v-drupalu">Instalace dodatečných modulů v Drupalu</a>        </div>
+        </div>
+</div>
+</fieldset>
+

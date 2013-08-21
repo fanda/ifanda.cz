@@ -1,0 +1,18 @@
+---
+title: Drupal a zapomenuté heslo administrátora
+date: 2009-02-11 16:30
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: false
+---
+<p>Nemáte-li na svém localhost nakonfigurovaný mail server a stránky v testovacím prostředí Vám zapomenuté heslo nepošlou, máte 2 možnosti. Buď si ten server nakonfigurujete a nebo si heslo změníte jednoduchým SQL příkazem přímo v databázi. Přestože první možnost je z dlouhodobého hlediska jistě výhodnější, vždy volím tu druhou. Její krátký postup se může hodit každému drupalistovi.</p>
+<h2>Jak v Drupalu změnit zapomnuté heslo admina přístupem do databáze</h2>
+<ol>
+<li>Přihlašte se do svého databázového systému. S mysql můžete použít phpMyAdmin nebo příkaz "<strong>mysql -u user -p</strong>".</li>
+<li>Přejděte do drupalem používané databáze("<strong>use drupal;</strong>" v mysql)</li>
+<li>Jednoduše spusťte SQL příkaz "<strong>UPDATE users SET pass=MD5('heslo') WHERE uid = 1;</strong>"
+</li>
+</ol>
+<p>Vše hotovo ve třech krocích.</p>
+

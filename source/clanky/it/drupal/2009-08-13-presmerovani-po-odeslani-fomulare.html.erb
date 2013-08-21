@@ -1,0 +1,14 @@
+---
+title: Přesměrování po odeslání fomuláře
+date: 2009-08-13 17:26
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: false
+---
+<p>Podařilo se mi v Drupalu najít elegantní fintu pro workflow několika stránek za sebou jen pomocí URL parametrů. Využije se například při přesměrování stránky po registraci, tedy když chci, aby byl uživatel po stisknutí tlačítka <em>Registrovat se</em> přesměrován na stránku se zvěstí o doručení potvrzovacího emailu. Stačí jít na stránku<br>
+<code>/user/register?destination=email-bude-dorucen</code>.<br>
+Finta je ještě lepší v tom, že takto jde napsat <strong>?destination</strong> vícenásobně za sebou, takže další příklad použití je<br>
+<code>/user/register?destination=user/login?destination=upload-video</code>.</p>
+<p>Co na to říkáte?</p>
+

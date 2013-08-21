@@ -1,0 +1,52 @@
+---
+title: Server Side Includes - oživení statických stránek
+date: 2009-02-11 10:35
+layout: article
+comments: false
+tags: [it, perl]
+geshifilter: false
+---
+<p>Server Side Include neboli SSI je nejstarší a nejjednoduší způsob jak zdynamizovat statické html stránky. Umožňuje velmi rychlé vkládání kusu html kódu do jiného html souboru přímo prostřednictvím webového serveru. Nastavení je jednoduché a možnosti velké.</p>
+SPLIT
+<h2>Nastavení webového serveru pro použítí SSI</h2>
+<p>Snad všechny dostupné webové servery podporují SSI. Většina z nich má dokonce SSI přímo zabudované v sobě. Protože používám velmi rozšířený webový server Apache, bude následující popis konfigurace určen právě pro Apache. Pro provozování SSI s Apache je třeba mít zapnut modul <em>mod_include</em>, avšak ten bývá zapnut implicitně, takže většinou není potřeba jej zapínat ručně.<br>
+V ideálním případě, tedy při možnosti konfigurovat soubor <em>httpd.conf</em>, stačí v tomto konfiguračním souboru přidat následující řádky:<br>
+<strong>Options +Includes</strong> # povolí SSI<br>
+<strong>AddType text/html .shtml</strong> # začne považovat soubory s příponou .shtml za <em>text/html</em> soubory<br>
+<strong>AddHandler server-parsed .shtml</strong> # napoví Apache jak zpracovat .shtml soubory<br>
+<strong>XBitHack on</strong> # budou se parsovat všechny spustitelné soubory typu <em>text/html</em><br>
+Pokud nemáte přístup ke konfiguračnímu souboru Apache, lze tyto direktivy vložit i do .htaccess.<br>
+Více není třeba nastavovat. Snad jen pokud chcete připojovat výstup CGI skriptů, musí se vložit také direktiva<br>
+<strong>AddHandler cgi-script .cgi</strong></p>
+<p>Možná se ptáte, proč používat příponu .shtml a ne klasickou .html. Samozřejmě není problém používat příkazy SSI v souborech s příponou .html, ale je třeba si uvědomit, že Apache bude potom hledat SSI příkazy i v souborech, kde žádné nejsou a tím se může zpomalit chod celého webového serveru. Proto je lepší oddělit html soubory, které SSI používají, od normálních statických souborů právě změnou jejich přípony na .shtml.</p>
+<h2>Používání Server Side Includes v html kódu</h2>
+<p>SSI definuje množství direktiv pro dynamičnost webových stránek. Jako příklad uvedu 3 mnou nejpoužívanější direktivy SSI: inlude, exec a echo. Už podle jejich názvu je zřejmé k čemu slouží.</p>
+<h3>#inlude</h3>
+<p>Direktiva #include přebírá jako parametr jméno souboru, který se má vložit na místo volání této direktivy. Jednoduché a efektivní. Využitelné například pro zobrazení hlavičky a patičky stránky, která často bývá pro všechny stránky stejná.</p>
+<ol>Příklady použití (voláme například stránku <a href="http://ifanda.cz/ssi-priklad/index.shtml" title="http://ifanda.cz/ssi-priklad/index.shtml">http://ifanda.cz/ssi-priklad/index.shtml</a>):
+<li>
+<strong>&lt;!--#include virtual="/header.html"--&gt;</strong> (použije soubor <a href="http://ifanda.cz/header.html" title="http://ifanda.cz/header.html">http://ifanda.cz/header.html</a>)</li>
+<li>
+<strong>&lt;!--#include file="submenu.html"--&gt;</strong> (použije soubor <a href="http://ifanda.cz/ssi-priklad/submenu.html" title="http://ifanda.cz/ssi-priklad/submenu.html">http://ifanda.cz/ssi-priklad/submenu.html</a>)</li>
+</ol>
+<p>Rozdíl mezi použitím argumentů <em>virtual</em> a <em>file</em> je v tom, kde se bude hledat vkládaný soubor. Při použití argumentu <em>file</em> je cesta k souboru relativní k adresáři, kde je umístěn volaný html soubor. Argument <em>virtual</em> zase očekává relativní URL ke vkládanému souboru, je tedy vztažen k Document_Root. Důležité je počáteční lomítko cesty ('/'), které když odstraníme, bude se <em>virtual</em> chovat přesně jako <em>file</em>.</p>
+<h3>#exec</h3>
+<p>Pro vkládání výstupu CGI skriptů pomocí SSI je zde direktiva #exec s dvěma možnými argumenty <em>cgi</em> a <em>cmd</em>.<br>
+Použitím<br>
+<strong>&lt;!--#exec cgi="/cgi-bin/nahoda.cgi"--&gt;</strong><br>
+se zavolá CGI skript nahoda.cgi a jeho výstup se vloží na místo direktivy. Pro cestu k CGI skriptu platí stejná pravidla jako pro argument <em>virtual</em> direktivy #include.<br>
+Někdy se hodí volat přímo příkaz operačního systému. Pro tento účel je zde argument <em>cmd</em>:<br>
+<strong>&lt;!--#exec cmd="ls"--&gt;</strong> (vypíše obsah aktuálního adresáře)<br>
+<strong>&lt;!--#exec cmd="perl /cesta/ke/skriptu/skript.pl"--&gt;</strong> (spuštění skriptu explicitním určením intepreteru)<br>
+V praxi zřejmě najde větší uplatnění argment <em>cgi</em> i z toho důvodu, že příkazy operačního systému můžeme jednoduše volat uvnitř CGI skriptů.</p>
+<h3>#echo</h3>
+<p>Poslední direktivou Server Side Includes, kterou si uvedeme je #echo. Direktiva vypíše aktuální hodnotu některé z vybraných proměnných prostředí (environment variable) pomocí argumentu <em>var</em>. Například<br>
+<strong>&lt;!--#echo var="DATE_LOCAL"--&gt;</strong><br>
+vypíše aktuální čas na serveru. Další možné proměnné jsou LAST_MODIFIED (datum poslední změny souboru), DOCUMENT_URI (URL vyžádaného dokumentu) nebo například DOCUMENT_NAME (jméno vyžádaného dokumentu). Seznam všech proměnných je <a href="http://httpd.apache.org/docs/2.0/mod/mod_include.html#includevars" title="Seznam všech proměnných použitelných direktivou #echo">zde</a>.</p>
+<h2>Závěr</h2>
+<h3>Všimněte si...</h3>
+<p>Všimněte si, že všechny direktivy SSI jsou uvozeny html komentáři. Tím je vyřešen problém zobrazení SSI příkazů při jejich nefunkčnosti. Nepřeložené SSI direktivy se ve výsledku nezobrazí, neboť jsou jednoduše zakomentovány.</p>
+<p>Na závěr poradím malou vychytávku pro automatické spouštění úvodní stránky index.shtml místo index.html. Stačí vytvořit nebo upravit soubor .htaccess s řádkou<br>
+<strong>DirectoryIndex index.shtml index.html</strong><br>
+Po této úpravě bude webový server hledat nejprve index používající SSI a teprve potom statickou verzi úvodní stránky.</p>
+

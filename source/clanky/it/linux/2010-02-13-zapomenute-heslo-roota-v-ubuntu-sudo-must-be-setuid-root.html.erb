@@ -1,0 +1,47 @@
+---
+title: Zapomenuté heslo roota v Ubuntu a chyba sudo must be setuid root
+date: 2010-02-13 11:10
+layout: article
+comments: false
+tags: [it, linux]
+geshifilter: true
+---
+<p>Ještě jsem se ani pořádně neprobudil a už jsem musel řešit dva malé problémy s Ubuntu Linuxem. Nejdříve mně nešel spustit Virtualbox a zadávání rootovských příkazů přes <em>sudo</em> hlásilo chybu. Potom jsem narazil na to, že jsem si změnil heslo pro uživatele root, a protože jej takřka nepoužívám, nemohl jsem si na něj vzpomenout. Oboje jsem po chvíli vyřešil. Vám snad ušetřím čas, když obě víceméně triviální řešení napíšu i sem.</p>
+SPLIT
+<h2>sudo: must be setuid root</h2>
+<p>Pokud na Vás po zadání příkazu <em>sudo</em> vyskočí tato hláška. Neděste se, jde to opravit. Jen <strong>musíte restartovat počítač a spustit Recovery mode</strong>, abyste se dostali do rootovské konsole (zde to bude chtít heslo, které jsem si já nepamatoval).<br>
+V příkazové řádce uživatele root v Recovery mode napište tyto <strong>dva jednoduché příkazy</strong>.<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;"><span class="kw2">chown</span> root:root <span class="sy0">/</span>usr<span class="sy0">/</span>bin<span class="sy0">/</span><span class="kw2">sudo</span>
+<span class="kw2">chmod</span> <span class="nu0">4755</span> <span class="sy0">/</span>usr<span class="sy0">/</span>bin<span class="sy0">/</span><span class="kw2">sudo</span></pre></div>
+<br>
+Nyní jen <strong>restartujte počítač zpět do normálního režimu</strong> a <em>sudo</em> poběží, jak má.<br>
+Restartovat můžete příkazem<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;">shutdown <span class="re5">-r</span> now</pre></div>
+<h2>Zapomenuté heslo roota v Ubuntu Linux</h2>
+<p>Při vstupu do Recovery mode jsem narazil na to, že jsem zapomněl heslo uživatele root, které jsem někdy předtím změnil.<br>
+Popíši jak ho změnit, ale <strong>je k tomu potřeba Live CD s nějakým jiným Linuxem</strong> nebo Ubuntu USB klíčenka. Já mám právě tu USB klíčenku, takže mi stačí strčit flashku do počítače a viola, bootuje se Linux.<br>
+Jakmile se dostanete do jiného Linuxu, <strong>připojte (mountněte) diskový oddíl, na kterém je nainstalováno Ubuntu se zapomenutým heslem</strong>. Například poklikáním na ikonku disku v grafickém rozhraní nebo v konsoli<br>
+</p>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;"><span class="kw2">mount</span> <span class="sy0">/</span>dev<span class="sy0">/</span>hda1 <span class="sy0">/</span>mnt<span class="sy0">/</span>disk1</pre></div>
+<br>
+Dále v konsoli <strong>editujte soubor /etc/shadow z oddílu, kde je Ubuntu</strong>. Pokud jste použili výše uvedený příkaz mount, editovat můžete například pomocí příkazu (jako root)<br>
+<div class="geshifilter"><pre class="bash geshifilter-bash" style="font-family:monospace;"><span class="kw2">vi</span> <span class="sy0">/</span>mnt<span class="sy0">/</span>disk1<span class="sy0">/</span>etc<span class="sy0">/</span>shadow</pre></div>
+<br>
+V otevřeném textovém souboru <strong>smažte vše mezi prvními dvěmi dvojtečkami na řádku začínajícím slovem <em>root</em></strong>.<br>
+Například:
+<pre>root:nĚJak1ŠilEnÝřet2zeC:10852:0:99999:7:::</pre>
+<p>nahraďte za</p>
+<pre>root::10852:0:99999:7:::</pre>
+<p>a <strong>uložte</strong>. Při požadavku na heslo roota poté bude stačit stisknout Enter, ale <strong>nezapomeňte heslo změnit</strong> (příkaz passwd) a dejte si záležet, aby bylo dostatečně silné!</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/pocitace/linux/vicero-live-linuxu-na-jedne-usb-flash-klicence">Vícero Live Linuxů na jedné USB flash klíčence</a>        </div>
+        </div>
+</div>
+</fieldset>
+

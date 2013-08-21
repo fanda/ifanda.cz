@@ -1,0 +1,255 @@
+---
+title: Program JSON2XML
+date: 2010-06-02 13:39
+layout: article
+comments: false
+tags: [it, perl]
+---
+<p>Program JSON2XML v jazyce Perl vznikl jako školní projekt z předmětu Principy programovacích jazyků a OOP. Zde jeho zadání, popisný text k vypracované implementaci a implementace v jazyce Perl.</p>
+
+SPLIT
+
+<h1>Zadání</h1>
+<p>Cílem je vytvořit skript pro konverzi JSON formátu do XML. Každému prvku z JSON formátu (objekt, pole, dvojice jméno-hodnota) bude odpovídat jeden párový element se jménem podle jména dvojice a obsahem podle hodnoty dvojice. Každé pole bude obaleno párovým elementem &lt;array&gt; a každý prvek pole bude obalen párovým elementem &lt;item&gt;.<br>
+JSON hodnoty typu <strong>string</strong> a <strong>number</strong> a JSON literály <strong>true</strong>, <strong>false</strong> a <strong>null</strong> budou transformovány v závislosti na parametrech skriptu na atribut <strong>value</strong> daného elementu s odpovídající hodnotou nebo na textový element v případě hodnoty typu <strong>string</strong> a <strong>number</strong> či na element &lt;true&gt;, &lt;false&gt; a &lt;null&gt;.<br>
+Verze formátu JSON, ač není standardizován ale je podmnožinou jazyka JavaScript, bude uvažována z webové stránky <a href="http://www.json.org" title="http://www.json.org">http://www.json.org</a> . Stručně: soubor obsahuje jeden globální objekt. <em>Objekty</em> jsou zapsány ve složených závorkách a obsahují čárkami oddělené dvojice <em>jméno</em> : <em>hodnota</em>. <em>Jméno</em> je řetězec jazyka JavaScript. <em>Pole</em> je zapsáno do hranatých závorek a obsahuje hodnoty oddělené čárkami. <em>Hodnota</em> může být další objekt, řetězec, číslo nebo pole. Hodnotou může být také literál <strong>true</strong>, <strong>false</strong> nebo <strong>null</strong>. Prázdné znaky mimo řetězce mohou být ignorovány.</p>
+<h2>Parametry programu</h2>
+<ul>
+<li>
+<strong>--help</strong>   nápověda programu</li>
+<li>
+<strong>--input=filename.ext</strong>   zadaný vstupní JSON soubor (pokud chybí, použije se standardní vstup)</li>
+<li>
+<strong>--output=filename.ext</strong>   textový výstupní XML soubory s obsahem převedeným ze vstupního souboru (pokud chybí, použije se standardní výstup)</li>
+<li>
+<strong>-n</strong>   negenerovat hlavičku XML na výstup skriptu</li>
+<li>
+<strong>-r=root-element</strong>   jméno párového kořenového elementu obalující výsledek. Pokud nebude zadán, tak se výsledek neobaluje kořenovým elementem, ač to potenciálně porušuje validitu XML.</li>
+<li>
+<strong>-s</strong>   hodnoty dvojic typu <strong>string</strong> budou transformovány na textové elementy místo na atributy</li>
+<li>
+<strong>-i</strong>   hodnoty dvojic typu <strong>number</strong> budou transformovány na textové elementy místo na atributy</li>
+<li>
+<strong>-l</strong>   hodnoty literálů (true, false, null) budou transformovány na elementy &lt;true&gt;, &lt;false&gt; a &lt;null&gt; místo na atributy</li>
+<li>
+<strong>-e</strong>   zotavení z chybějícího obalení pole kořenovým objektem tj. globální pole bude obaleno kořenovým objektem (nutno kombinovat s parametrem -r, jinak se přepne do chybového stavu)</li>
+</ul>
+<p><br></p>
+<h1>Popis implementace programu</h1>
+<p>Sic je jazyk Perl velmi mocný nástroj, oproti svému konkurentu jazyku Python má podstatně kostrbatější vyjadřovací prostředky, které ho předurčují pro potřeby spíše menších aplikací a skriptů, které implementují rychlé pomocné rutiny a textové filtry, ale jež by nebylo záhodno psát v jazycích podobného ražení jako například Bash. Samozřejmě jde taková tvrzení vyvrátit příklady větších a úspěšných aplikací. Je to čistě subjektivní názor, který jen předesílá důvody výběru této varianty.</p>
+<p>Perl skrze CPAN nabízí velkou knihovnu modulů snadno rozšiřujících možnosti jazyka a šetřících programátorův čas. Při práci na aplikaci byly použity pouhé čtyři z nich a nyní vysvětlím důvody jejich použití a krátce popíši, jak se moduly pracovalo.</p>
+<p>Data::Dumper je modul, který se aspoň na krátkou chvíli usadí v každé mé aplikaci, protože se jedná o skvělého pomocníka při ladění. Každou proměnou rozpitvá a ukáže ji tak, jak je. Přestože se většinou neohřeje déle než na implementační a ladící fáze, aplikace JSON2XML je v tomto výjimkou, neboť zde Data::Dumper skvěle pomáhá rozlišovat čísla a řetězce číslic. Jejich řádné nerozlišení se mi zdá jako malý nedostatek modulu JSON::XS.<br>
+JSON::XS parsuje vstup aplikace, strukturu JSON jazyka Javascript. Díky tomuto modulu se práce se vstupem stala až překvapivě lehkou. Tak lehkou jako proložení argumentu funkce řetězcem. Funkce, která se jmenuje decode, ihned celý vstup uloží jako perlovský hash a ukáže na něj referencí.<br>
+Výstup programu je pak uskutečněn pomocí modulu XML::Writer, který nabízí rozhraní k tvorbě XML dokumentů. Zápis XML je díky funkcím tohoto modulu velmi jednoduchý a přesto programátorům nechává volné ruce. Podporuje zapínání a vypínání kontroly výstupních souborů, což se hodí nejen při ladění programu.<br>
+Posledním modulem je IO::File, ale o něm se rozepisovat nebudu, protože je použit jen kvůli závislosti, kterou na něm má modul XML::Writer.</p>
+<p>Vskutku celý program sestává jen z použití těchto modulů. Část skriptu je vlastně jen iniciace objektů modulů, krátká práce s nimi a následný úklid. Přesto se v kódu aplikace vyskytují i čtyři podprogramy. Dva z nich pomáhají zpracovat vstup na výstup a dva se volají při zpracování argumentů z příkazové řádky. Naposled zmíněné popíši jako první.</p>
+<p>Zpracování argumentů příkazové řádky provádí funkce parseOpts(). Ta všechny argumenty spojí do jednoho řetězce a zadané parametry vyhledává regulárními výrazy. Úspěšně vyhledaný regulární výraz je z řetězce odstraněn, takže na konci zbude řetězec složený jen z bílých znaků. Tak se pozná, byly-li vloženy jen správné argumenty a pokud jsou vloženy nevalidní agrumenty, program to pozná a skončí. Kvůli argumentu --help je vytvořen stejnojmený podprogram, který obsahuje textovou nápovědu.</p>
+<p>Zbylé dva podprogramy jsou hlavní náplní aplikace. Jmenují se json2xml a value2xml. Podprogram json2xml je funkce, která je volána po inicializaci globálního objektu $writer, který používá pro tvorbu výsledného XML dokumentu. Ten je tvořen jednak rekurzívně tak, že jedno zanoření funkce odpovídá jednomu zanoření v perlovkém hashi a jednak iterativně, jelikož na jedné úrovní zanoření se může vyskytovat více objektů. Selektivně je pak odvozeno chování pro různé typy objektů, které se v hashi mohou vyskytovat. Jsou jimi pole, vnořené hashe a hodnoty. Právě pro hodnoty je vytvořen podprogram value2xml. Opět selektivně v závislosti na typu hodnoty a argumentech programu je zde vypisováno XML. U obou funkcí se jedná o vskutku změť podmínek, které tu a tam obsahují volání deklarující výpisy XML na výstup. </p>
+<p>Tímto je popsána celá aplikace json2xml. Celé řešení v kódu jazyka Perl má jen o málo méně než 200 řádků, za což patří díky hlavně modulům, které byly použity. Jedná se o malý důkaz užitečnosti a síly těchto modulů. Nechť je jejich autorům vysloven aspoň malý dík za velkou práci, jež odvedli.</p>
+
+
+<h1>Implementace programu JSON2XML v jazyce Perl</h1>
+<% code "perl" do %>
+#!/usr/bin/perl
+use strict;
+
+# used modules
+use Data::Dumper; # stringified perl data structures
+use JSON::XS;     # JSON serialising/deserialising
+use XML::Writer;  # writing XML documents
+use IO::File;     # supply object methods for filehandles
+
+# available options of this program
+my $n=0;  # not to generate XML header
+my $r=''; # name of the root element to wrap result
+my $s=0;  # string transform
+my $i=0;  # integer transform
+my $l=0;  # literals transform
+my $e=0;  # root array recovery
+
+my $infile = ''; my $outfile = ''; # input and output filenames
+
+#########################################################################
+# start
+#########################################################################
+
+parseOpts(@ARGV); # parsing program arguments
+
+# file input
+my $jshash; # declare json hash reference
+
+local $/=undef; # unset $/ for whole file read at once
+
+if ($infile) { # reading from file
+    open JSFILE, "<", $infile or die $infile.': problem with file!';
+    $jshash = JSON::XS->new->utf8->decode(<JSFILE>); # json parsing
+    close JSFILE;
+}
+else { # reading from STDIN
+  $jshash = JSON::XS->new->utf8->decode(<STDIN>); # json parsing
+}
+# explicit check of input JSON and options
+die("Invalid JSON input\n") if (ref $jshash eq 'ARRAY' and !($r and $e));
+
+# set output handler
+my $output = $outfile ? new IO::File(">$outfile") : <STDOUT>;
+# create xml writer
+my $writer = new XML::Writer(OUTPUT => $output, UNSAFE => 1);
+
+$writer->xmlDecl("UTF-8") unless $n; # xml header if such option
+$writer->startTag($r) if $r; # root element if such option
+
+json2xml($jshash); # JSON2XML
+
+$writer->endTag($r) if $r; # end root element if such option
+
+$writer->end(); # destroy xml writer
+$output->close() if $outfile; # close file if opened
+
+#########################################################################
+# finish
+#########################################################################
+
+
+##########################################################################
+# subroutine for transforming JSON::XS hash into XML text
+sub json2xml {
+  my ($jr) = @_;
+  if (ref $jr eq 'ARRAY') {
+      $writer->startTag('array');
+      foreach (@$jr) { # loop items in array
+        if (ref $_ eq '' or ref $_ eq 'JSON::XS::Boolean') { # value
+          value2xml('item', $_); # use 'item' as a key
+        }
+        else { # reference
+          $writer->startTag('item');
+          json2xml($_); # recursive call for each item
+          $writer->endTag('item');
+        }
+      }
+      $writer->endTag('array');
+    return;
+  }
+  #value2xml('item', $jr) if (ref $jr eq '');
+  while ( my ($key, $value) = each (%$jr) )
+  { # main loop of writing XML
+    if (ref $value eq 'HASH')
+    { # HASH
+      $writer->startTag($key);
+      json2xml($value); # recursive call for this hash
+      $writer->endTag($key);
+    }
+    elsif (ref $value eq 'ARRAY')
+    { # ARRAY
+      $writer->startTag($key);
+      json2xml($value); # process it at the begin of next call
+      $writer->endTag($key);
+    }
+    else
+    { # VALUE
+      value2xml($key, $value);
+    }
+  } # end of WHILE
+} # end of json2xml
+
+
+##########################################################################
+# subroutine for transforming value into XML text
+sub value2xml {
+  my ($key, $value) = @_;
+  # BOOLEAN LITERAL
+  if (ref $value eq 'JSON::XS::Boolean') {
+    unless ($l) { # make attribute
+      $writer->emptyTag($key,'value' => $value ? 'true':'false');
+    }
+    else { # make element
+      $writer->startTag($key);
+      $writer->emptyTag($value ? 'true':'false');
+      $writer->endTag($key);
+    }
+  }
+  # NULL
+  elsif (! defined $value) {
+    unless ($l) { # make attribute
+      $writer->emptyTag($key, 'value' => $value ? $value : 'null');
+    }
+    else { # make element
+      $writer->startTag($key);
+      $writer->emptyTag('null');
+      $writer->endTag($key);
+    }
+  }
+  # STRING or NUMERIC value
+  else {
+    my $novalue = 0;
+    if (Dumper($value) =~ /^.*= '.*'.*/
+    or  Dumper($value) =~ /^.*= ".*".*/) { # true if string
+      $novalue = 1 if $s;
+    }
+    else { # true if number
+      $novalue = 1 if $i;
+    }
+    unless ($novalue) { # make attribute
+      $writer->emptyTag($key,'value' => $value);
+    }
+    else { # make element
+      $writer->startTag($key);
+      $writer->characters($value);
+      $writer->endTag($key);
+    }
+  }
+}
+
+##########################################################################
+# parsing of program arguments subroutine
+sub parseOpts {
+  my $astr = join(' ',@_); # join all arguments into one string
+  return if ($astr =~ /^\s*$/); # ERROR - no arguments
+  if ($astr =~ s/--help//) {
+    die("--help must be only given argument\n") unless ($astr =~ /^\s*$/);
+    help(); # print help message and exit
+    exit 0;
+  }
+  else { # parse arguments
+    if ($astr =~ s/--input=([\S]*)//) {
+      $infile = $1;
+      die("this input file cannot be used\n") if (-d $infile);
+      die("input file not exists\n") if (! -f $infile);
+    }
+    if ($astr =~ s/--output=([\S]*)//) {
+      $outfile = $1;
+      die("this output file cannot be used\n") if (-d $outfile);
+    }
+    unless ($astr =~ /^\s*$/) { # OPTIONS given
+      $n = 1 if ($astr =~ s/[\-]n//);
+      $r = $1 if ($astr =~ s/[\-]r=([\S]*)//);
+      $s = 1 if ($astr =~ s/[\-]s//);
+      $i = 1 if ($astr =~ s/[\-]i//);
+      $l = 1 if ($astr =~ s/[\-]l//);
+      $e = 1 if ($astr =~ s/[\-]e//);
+    }
+    die("-e can not be without -r.\nSee json2xml.pl --help\n") if ($e and !$r);
+    die("Wrong arguments are given\n") unless ($astr =~ /^\s*$/);
+  }
+} # end of parseOpts
+
+
+##########################################################################
+# HELP PRINT subroutine
+sub help {
+    print "Program json2xml\n\n";
+    print "Usage: jsn.pl [OPTIONS]\n";
+    print "\nAvailable options:\n";
+    print "\n--input=file1.ext\tInput JSON file\n";
+    print "--output=file2.ext\tName of output XML file\n";
+    print "-n\t\t\tNot to generate XML header\n";
+    print "-r=root-element\t\tName of the element to wrap result\n";
+    print "-s\t\t\tTransform strings to element instead attribute\n";
+    print "-i\t\t\tTransform integers to element instead attribute\n";
+    print "-l\t\t\tTransform other JSON literals to element\n";
+    print "-e\t\t\tWrong root array recovery\n";
+    print "\nOther controls:\n--help\t\t\tThis message\n\n";
+} # end of help
+
+# end of script json2xml
+<% end %>

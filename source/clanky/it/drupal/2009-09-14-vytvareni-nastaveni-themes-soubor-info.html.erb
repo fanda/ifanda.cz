@@ -1,0 +1,151 @@
+---
+title: Vytváření a nastavení themes, soubor .info
+date: 2009-09-14 20:37
+layout: article
+comments: false
+tags: [it, drupal]
+geshifilter: true
+---
+<p>Při vytváření nového tématu vzhledu pro cms Drupal se nevyhneme vytvoření souboru .info. Právě v tomto souboru se definuje struktura webu, regiony bloků a přiřazují se k tématu css soubory s kaskádovými styly a javascript. Také se zde specifikuje, které nastavení bude zpřístupněno v administrátorské sekci.</p>
+<h2>O souboru s příponou .info</h2>
+<p>Každé drupalovské téma vzhledu musí ve svém adresáři obsahovat soubor s příponou .info. Bez tohoto souboru nebude totiž téma viditelné v administrátorské sekci. </p>
+<p>Je také důležité vědět, že:</p>
+<div style="border:3px red dotted;"><strong style="font-size:large;">Drupal ukládá soubor .info do cache, proto se všechny změny projeví až po vyčištění cache.</strong></div>
+<p>Jméno souboru .info slouží v Drupalu k internímu (strojovému) pojmenování tématu vzhledu. Je tedy třeba dbát na jeho správné pojmenování. Stane-li se, že se téma jmenuje stejně jako jiný aktivovaný modul, může dojít k omezení funkcionality Drupalu, proto je zde určitá konvence v pojmenování. Název by měl začínat malým nebo velkým písmenem abecedy (nikdy ne číslicí) a dále by měl obsahovat jen číslice, písmena a potržítka.</p>
+<h2>Struktura souboru .info</h2>
+<p>Struktura souboru není nepodobná konfiguračním souborům typu INI. Jedná se o statický textový soubor, kde je na každém řádku jeden konfigurační výraz. Výraz se tvoří vždy jako pár klíč=hodnota, kde vlevo je klíč, neboli název nastavované vlastnosti a vpravo je hodnota této vlastnosti. Klíč je od hodnoty oddělen znakem "rovná se".</p>
+<p>Středníky v textu slouží k zakomentování výrazu, tedy k jeho zrušení. Pokud je některý nepovinný klíč nedefinován, nastaví se jeho výchozí hodnota.</p>
+<ul>Drupal rozumí těmto klíčům k nastavení:
+<li>name (povinný klíč)</li>
+<li>description (doporučený klíč)</li>
+<li>screenshot</li>
+<li>version</li>
+<li>core (povinný klíč)</li>
+<li>engine (povinný klíč)</li>
+<li>base theme</li>
+<li>regions</li>
+<li>features</li>
+<li>stylesheets</li>
+<li>scripts</li>
+<li>php</li>
+</ul>
+<h2>Popis klíčů nastavení</h2>
+<h3>name (povinný klíč)</h3>
+<p>Hodnotou je jméno tématu vzhledu určené lidem. Lidem čitelný název nemá tak přísné požadavky na způsob zápisu jako strojově čitelný název a může obsahovat i mezery a některé další znaky navíc.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">name = Moje téma vzhledu 2.0</pre></div>
+<h3>description (doporučený klíč)</h3>
+<p>Krátký popis tématu vzhledu, který se zobrazí na stránce s výběrem témat vzhledu v sekci Prvky webu v Administraci.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">description = Toto téma vzhledu pro Drupal ještě nevzniklo a asi ani nikdy nevznikne</pre></div>
+<h3>screenshot</h3>
+<p>Pokud chcete společně s popisem zobrazit v administraci i malý náhled vzhledu, přiřaďte jako hodnotu tomuto klíči cestu k obrázku s náhledem. Cesta k obrázeku je relativní a vychází se z adresáře tématu. Při nedefinovaném klíči bude Drupal hledat náhled v obrázku sreenshot.png v adresáři s tématem.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">screenshot = images/screenshot.gif</pre></div>
+<h3>version</h3>
+<p>Verze tématu. Zadávejte hodnotu pouze, pokud neplánujete vložit své téma vzhledu na drupal.org. V opačném případě bude totiž hodnota vložena automaticky komprimačním skriptem.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">version = 2.0</pre></div>
+<h3>core (povinný klíč)</h3>
+<p>Každý soubor .info drupalovského tématu vzhledu musí obsahovat označení verze jádra Drupalu, aby byla zachována kompatibilita. Pokud hodnota tohoto klíče nesouhlasí s hodnotou verze jádra Drupalu, téma vzhledu nebude aktivováno.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">core = 6.x</pre></div>
+<h3>engine (povinný klíč)</h3>
+<p>Nastavení motoru, který použije všechny funkce a šablony tématu vzhledu. Jako výchozí motor je možné uvést "phptemplate". Pokud je nastavení klíče engine vynecháno, má se za to, že téma má vlastní motor definovaný v souboru .theme, ovšem jedná se o volbu pouze pro velmi pokročilé uživatele.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">engine = phptemplate</pre></div>
+<h3>base theme</h3>
+<p>Pokud je téma vzhledu subtéma jiného tématu, hodnota klíče base theme udává rodičovské téma, ze kterého se odvozují výchozí vlastnosti subtéma.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">base theme = garland</pre></div>
+<h3>regions</h3>
+<p>Definice regionů bloků použitých tématem vzhledu. Definuje se jako <em>pole</em> tak, že na každý řádek se napíše jeden prvek pole. Prvek je uvozen klíčovým slovem regions bezprostředně následovaným hranatými závorkami, uvnitř kterých je strojově čitelný název regionu. Hodnota prvku je již klasicky za znakem "rovná se" a vyjadřuje lidem srozumitelný název regionu, který se objeví na stránce s nastavením bloků.<br>
+Pokud není pole klíčů regions specifikováno, bere se výchozí nastavení uvedené níže.<br>
+<a name="regions"></a><br>
+</p>
+<div style="border:3px red dotted;"><strong style="font-size:large;">Názvy regionů je lepší psát anglicky, protože pak mohou být automaticky lokalizovány a dají se upravovat bez ohledu na téma vzhledu.</strong></div>
+<p></p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">regions[left] = Left sidebar
+regions[right] = Right sidebar
+regions[content] = Content
+regions[header] = Header
+regions[footer] = Footer</pre></div>
+<h3>features</h3>
+<p>Různé prvky drupalovské stránky, jako například primární odkazy, vyhledávací formulář nebo slogan webu, mohou být zobrazovány a skrývány podle potřeb uživatele. Které prvky lze takto nastavit, určíme polem klíčů features. Pokud některý z prvků v definici vynecháme, tak se v nastavení administrátorům nezobrazí.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">features[] = logo
+features[] = name
+features[] = slogan
+features[] = mission
+features[] = node_user_picture
+features[] = comment_user_picture
+features[] = search
+features[] = favicon
+; Poslední dvě se v nastavení nezobrazí
+; features[] = primary_links
+; features[] = secondary_links</pre></div>
+<h3>stylesheets</h3>
+<p>Protože jsou témata vzhledu tvořena kaskádovými styly, je nutné definovat, které css soubory. Od verze 6 drupalovského jádra, lze css soubory přidávat pomocí pole klíčů v souboru .info.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">stylesheets[all][] = layout.css
+stylesheets[all][] = colours.css</pre></div>
+<h3>scripts</h3>
+<p>Podobně jako kaskádové styly se dá přidávat i javascript.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">scripts[] = courvycorners.js</pre></div>
+<h3>php</h3>
+<p>Definuje minimální verzi php, kterou může téma vzhledu využívat. Pro většinu témat vzhledu nemusí být hodnota tohoto klíče nastavena a použije se výchozí konstanta pro Drupal.<br>
+</p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">php = 4.3.3</pre></div>
+<h2>Ukázkový soubor .info pro téma vzhledu v Drupalu</h2>
+<p></p>
+<div class="geshifilter"><pre class="text geshifilter-text" style="font-family:monospace;">; $Id: mytheme.info,v 0.1 2009/07/08 13:52:40 fanda Exp $
+ 
+name = My theme 2.0
+description = Nice theme for ifanda.cz
+screenshot = screenshot.gif
+engine = phptemplate
+version = "6.x-1.0"
+core = "6.x"
+ 
+regions[top_left] = top left
+regions[top_left_middle] = top left middle
+regions[top_right_middle] = top right middle
+regions[top_right] = top right
+ 
+features[] = logo
+features[] = name
+features[] = slogan
+features[] = mission
+features[] = node_user_picture
+features[] = comment_user_picture
+features[] = search
+features[] = favicon
+features[] = primary_links
+features[] = secondary_links
+ 
+scripts[] = js/jquery.equalheights.js
+scripts[] = js/jquery.corner.js
+ 
+stylesheets[all][] = css/style.css
+stylesheets[all][] = css/colors.css</pre></div>
+<h2>Jak použít klíč regions při vytváření Drupal themes</h2>
+<p>V souboru .info se pole klíčů regions nastaví <a href="#regions">výše uvedeným způsobem</a>. Slova v hranatých závorkách jsou později názvy proměnných v souboru tématu vzhledu page.tpl.php a v jeho odvozeninách jako <em>$left</em>, <em>$right</em> atd. Slova na pravé straně výrazu jsou názvy sloupců pro umístění bloků, jako na obrázku, kde ovšem jsou názvy bloků lokalizovány do češtiny.<br>
+<img src="/sites/default/files/pictures/drupal/bloky-themes-features.png" alt="ukázka stránky s bloky"></p>
+<h2>Na závěr ...<br>
+Obnovení cache v Drupalu</h2>
+<p>Aby se úpravy souboru .info projevily, musí se obnovit cache, která si soubor uchovává.<br>
+Uživatelé s příslušným oprávněním najdou tlačítko pro obnovení cache na stránce <em>Výkon</em> z administrátorské sekce <em>Nastavení webu</em> (/admin/settings/performance), <strong>úplně dole</strong>.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-related">
+      <div class="field-label">Podobné: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://ifanda.cz/clanky/drupal/anatomie-temat-vzhledu-pro-drupal-6">Anatomie témat vzhledu pro Drupal 6</a>        </div>
+              <div class="field-item even">
+                    <a href="http://ifanda.cz/clanky/drupal/prace-s-kaskadovymi-styly-pri-tvorbe-temat-pro-drupal">Práce s kaskádovými styly při tvorbě témat pro Drupal</a>        </div>
+        </div>
+</div>
+</fieldset>
+

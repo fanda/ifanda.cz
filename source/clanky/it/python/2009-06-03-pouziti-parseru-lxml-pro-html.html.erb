@@ -1,0 +1,60 @@
+---
+title: Použití parseru lxml pro HTML
+date: 2009-06-03 14:15
+layout: article
+comments: false
+tags: [it, python]
+geshifilter: true
+---
+<p><img style="float:left;" src="/a/pix/python.jpeg" alt="Python"><span style="width:77%;float:right;">Přestože jsem původně nechtěl, musím nyní programovat v jazyce Python. Sice jsem naučený perlista, ale Python se nezdá zas tak hrozný. Dnes jsem začal s průzkumem možností vytváření ElementTrees z HTML kódu. Jako parser jsem zvolil modul lxml.</span></p>
+<div style="clear:both;"></div>
+SPLIT
+<p>Pythonovský modul lxml jsem zvolil z důvodu jednoduchosti použití a dobrých výsledků rychlostního benchmarku, který jsem našel na <a href="http://blog.ianbicking.org/2008/03/30/python-html-parser-performance/" title="Benchmark xml parserů pro Python">stránkách Iana Bickinga</a>. Pro své účely používám speciálnější verzi lxml.html pro parsování HTML, ale v uvedeném postupu se mění pouze jméno modulu. Zájemcům o další funkce modulu lxml jistě neuniknou odkazy na konci článku.</p>
+<p>Směle se vydejme vstříc malému základu použití modulu. Nejprve je potřeba jej importovat do programu.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">import</span> lxml.<span class="me1">html</span> <span class="kw1">as</span> lh</pre></div>
+<p>Protože chci parsovat HTML stránky, musím si nějaké obsarat, a proto by byl vhodný modul umožňující HTTP requesty. Opener klasického modulu urllib2 tuto práci vykoná bezvadně.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">import</span> <span class="kw3">urllib2</span></pre></div>
+<p>Hned po inicializaci openeru, je možno stahovat a parsovat HTML stránky.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;">opener = <span class="kw3">urllib2</span>.<span class="me1">build_opener</span><span class="br0">(</span><span class="br0">)</span> <span class="co1"># incializace</span>
+opener.<span class="me1">addheaders</span> = <span class="br0">[</span><span class="br0">(</span><span class="st0">'User-agent'</span>, <span class="st0">'Fanda<span class="es0">\'</span>s bot'</span><span class="br0">)</span><span class="br0">]</span> <span class="co1"># nastavení openeru</span>
+page = opener.<span class="kw2">open</span><span class="br0">(</span><span class="st0">"http://www.example.net"</span><span class="br0">)</span> <span class="co1"># stažení stránky</span>
+tree = lh.<span class="me1">parse</span><span class="br0">(</span>page<span class="br0">)</span> <span class="co1"># vytvoření ElementTree z HTML</span></pre></div>
+<p>lh.parse vrátilo standardní ElementTree, se stejným rozhraním jako kdybych pro jeho získání použil HTMLparser. Základy práce s ElementTree tvoří pár metod, jejichž referenční manuál můžete najít mezi odkazy pod článkem.</p>
+<p>Já v ukázce načrtnu získání a zpracování textových odkazů na stránce. Pole anchorů nechám projít cyklem for, který v nich bude vyhledávat regulárním výrazem a všem relativním odkazům pridá domovskou adresu, takže budou absolutní.<br>
+</p>
+<div class="geshifilter"><pre class="python geshifilter-python" style="font-family:monospace;"><span class="kw1">import</span> <span class="kw3">re</span>
+links = <span class="kw2">self</span>._current_tree.<span class="me1">findall</span><span class="br0">(</span><span class="st0">'html/body/a'</span><span class="br0">)</span>
+final = <span class="br0">[</span><span class="br0">]</span>
+regul = <span class="kw3">re</span>.<span class="kw2">compile</span><span class="br0">(</span>r<span class="st0">'REGEXP'</span><span class="br0">)</span>
+<span class="kw1">for</span> link <span class="kw1">in</span> links:
+    link.<span class="me1">make_links_absolute</span><span class="br0">(</span>base<span class="br0">)</span>
+    <span class="co1"># všechny atrubuty a text dohromady</span>
+    texts = <span class="st0">" "</span>.<span class="me1">join</span><span class="br0">(</span>link.<span class="me1">values</span><span class="br0">(</span><span class="br0">)</span><span class="br0">)</span> + <span class="st0">" "</span> + link.<span class="me1">text_content</span><span class="br0">(</span><span class="br0">)</span>
+    <span class="kw1">if</span> regul.<span class="me1">search</span><span class="br0">(</span>texts<span class="br0">)</span>: <span class="co1"># regul matches</span>
+    final.<span class="me1">append</span><span class="br0">(</span>link.<span class="me1">get</span><span class="br0">(</span><span class="st0">'href'</span><span class="br0">)</span><span class="br0">)</span> <span class="co1"># získnání URL</span>
+uniq = <span class="kw2">list</span><span class="br0">(</span><span class="kw2">set</span><span class="br0">(</span>final<span class="br0">)</span><span class="br0">)</span> <span class="co1"># vykoná uniq</span></pre></div>
+<br>
+Speciálně modul lxml.html totiž nabízí funkce<br>
+<em>make_links_absolute(base)</em> pro tvorbu absolutních odkazů,<br>
+<em>iterlinks()</em> pro hledání odkazů uvnitř atributů,<br>
+<em>resolve_base_href()</em> pro zajistění vhodné domovské stránky a<br>
+<em>rewrite_links(link_replace_function)</em> pro pomoc při přepisování odkazů.
+<p>Jelikož funkce <em>make_links_absolute</em> volitelně volá také funkci <em>resolve_base_href</em>, což je ve výchozím nastavení zapnuto, není potřeba ji explicitně volat.</p>
+<fieldset class="fieldgroup group-links">
+<legend>Odkazy</legend>
+<div class="field field-type-link field-field-extlink">
+      <div class="field-label">Externí: </div>
+    <div class="field-items">
+            <div class="field-item odd">
+                    <a href="http://codespeak.net/lxml/">Oficiální stránky lxml</a>        </div>
+              <div class="field-item even">
+                    <a href="http://codespeak.net/lxml/api/index.html">Referenční příručka lxml</a>        </div>
+              <div class="field-item odd">
+                    <a href="http://infohost.nmt.edu/tcc/help/pubs/pylxml/">Python XML processing with lxml</a>        </div>
+        </div>
+</div>
+</fieldset>
+

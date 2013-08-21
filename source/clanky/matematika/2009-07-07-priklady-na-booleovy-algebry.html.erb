@@ -1,0 +1,46 @@
+---
+title: Příklady na Booleovy algebry
+date: 2009-07-07 23:15
+layout: article
+comments: false
+tags: [matematika]
+geshifilter: false
+---
+<p>Dva příklady k tématu Booleových algeber.</p>
+SPLIT
+<h2>Příklad 1.</h2>
+<p> V Booleově algebře (X, <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku">, <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku">, ', 0, 1) dokažte:</p>
+<ul>
+</ul>
+<ol>  y &lt;= x'  &lt;=&gt;  x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y  =  0</ol>
+<ol>  y &gt;= x'  &lt;=&gt;  x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y  =  1</ol>
+
+<h3>Řešení</h3>
+<p>1. Protože y &lt;= x', potom musí platit, že x' <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y = y. Potom x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> (x' <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y) = 0 a po použití asociativního zákona (x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> x' ) <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y = 0, ale (x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> x' = 0, tedy 0 <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y = 0 a proto také x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y = 0.<br><br>
+2. Obdobně jako u 1. Je-li y &gt;= x', potom x' <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y = y. Dosadíme za y do první rovnice a vidíme, že x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> (x' <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y) = 1. Takže (x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> x') <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y = 1 (podle asociativního zákona) a zároveň platí (x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> x') = 1, tedy 1 <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y = 1. Netřeba dodávat, že x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y = 1.<br></p>
+<h3>Vysvětlivky</h3>
+<p><img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> je operace spojení.<br>
+<img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> je operace průsek.<br>
+x' je komplement (doplněk) k x.<br>
+0 je nejmenší prvek algebry a 1 je největší prvek algebry.</p>
+<h2>Příklad 2.</h2>
+<p>Nechť X = { 1, 2, 5, 7, 14, 10, 35, 70 }. Položme x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> y = nsn(x, y), x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> y = NSD(x, y) a x' = 70/x pro všechna x, y <img src="/sites/default/files/matsymbol/je_prvkem.png" alt="je prvkem"> X. Dokažte, že (X, <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku">, <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku">, ', 1, 70) je Booleova algebra. Nakreslete její Hasseův diagram.</p>
+<h3>Řešení</h3>
+<p>Booleova algebra je vlastně Booleův svaz, kde si operací <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> představíme spojení a operací <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> průsek. Stejně jako ostatní svazy i tento má svůj Hasseův diagram.<br>
+<img src="/sites/default/files/pictures/matematika/Hasseuv-diagram1.png" alt="Hasseův diagram pro Booleovu algebru">.<br>
+Tento diagram je očividně izomorfní s diagramem pro svaz všech podmnožin tříprvkové množiny:<br>
+<img src="/sites/default/files/pictures/matematika/Hasseuv-diagram2.png" alt="Hasseův diagram podmnožin třiprvkové množiny">.<br>
+O svazu podmnožin tříprvkové množiny víme, že je komplementární, distributivní, takže i modulární. Je Booleovský. Svaz izomorfní se svazem podmnožin tříprvkové množiny je tedy také Booleovský. Dokonce počet prvků tohoto svazu je třetí množina dvou.<br>
+Důkaz se ovšem dá provést dokázáním všech axiomů Booleových algeber. Musí platit asociativita, komutativita, distributivnost, absorbce a idempotence, stejně jako věty o komplementaritě a věta o největším a nejmenším prvku.</p>
+<h3>Poznámka</h3>
+<p>Věta o komplementaritě:<br>
+x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> x' = 1   x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> x' = 0<br>
+neboli z příkladu: nsn(x, x') = 70    NSD(x, x') = 1<br>
+Věta o nejmenším a největším prvku:<br>
+x <img src="/sites/default/files/matsymbol/plusmodulo.png" alt="plus v kroužku"> 0 = x   x <img src="/sites/default/files/matsymbol/kratmodulo.png" alt="krat v kroužku"> 1 = x<br>
+opět vezmeme-li operace a prvky z příkladu:<br>
+nsn(x, 1) = x   NSD(x, 70) = x</p>
+<h3>Vysvětlivky</h3>
+<p>nsn ... nejmenší společný násobek<br>
+NSD ... největší společný dělitel</p>
+
