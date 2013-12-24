@@ -1,0 +1,10 @@
+.paginate.tac
+  - if prev_page
+    %span= link_to 'Předchozí strana', prev_page
+  %span.label
+    = page_number
+    \/
+    = num_pages
+  - if next_page
+    %span= link_to 'Další strana', next_page
+

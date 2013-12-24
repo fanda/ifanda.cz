@@ -8,7 +8,7 @@ gem "nokogiri"
 gem 'rb-inotify', '~> 0.9'
 gem "middleman", "~>3.1.4"
 gem "middleman-syntax"
-gem "middleman-blog", :git => "https://github.com/fanda/middleman-blog" #:path => 'lib/middleman-blog'
+gem "middleman-blog", :path => 'lib/middleman-blog'
 gem "middleman-livereload"
 
 gem 'therubyracer', :platforms => :ruby

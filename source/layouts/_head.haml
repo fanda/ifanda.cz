@@ -2,7 +2,7 @@
   %meta{:charset=>"utf-8"}
 
   %meta{:content=>"IE=edge,chrome=1", 'http-equiv'=>"X-UA-Compatible"}
-  %title= data.page.title || "Fanda Internetu"
+  %title= current_resource.data.title || "Fanda Internetu"
 
   = stylesheet_link_tag "app"
   = javascript_include_tag  "app"

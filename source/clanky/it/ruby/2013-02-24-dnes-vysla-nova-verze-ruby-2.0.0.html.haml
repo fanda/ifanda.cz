@@ -1,0 +1,60 @@
+---
+title: Vyšla nová verze Ruby 2.0.0
+date: 2013-02-24
+comments: true
+layout: article
+tags: [it, ruby]
+geshifilter: true
+---
+%p Ruby 2.0.0 je stabilní verze s několika vylepšeními oproti minulým verzím. Je zpětně kompatibilní s verzí 1.9 a připravena i pro nasazení v produkčním prostředí. Byla rozšířena také dokumentace této implementace oproti přechozí verzi.
+SPLIT
+
+%h3 Seznam novinek
+
+%span.label
+  Jádro jazyka
+%ul
+  %li Argumenty klíčových slov.
+  %li Module#prepend; možnost vložit objekt, který nelze přetížit.
+  %li Zkratka <em>%i</em> pro tvorbu číselných polí.
+  %li <em>__dir__</em> vrací cestu k souboru běžícího programu.
+  %li Výchozí kódování řetězců v programu je UTF-8.
+%span.label
+  Standardní knihovna
+%ul
+  %li Enumerable#lazy, Enumerator#Lazy, Enumerator#size, Range#size.
+  %li #to_h, nová konvenční metoda pro převod na Hash.
+  %li Změna regexp enginu na Onigmo.
+  %li API pro asynchronní odchyt výjimek.
+%span.label
+  Podpora ladění
+%ul
+  %li Podpora DTrace pro produkční diagnostiku běhu.
+  %li TracePoint, vylepšené trasovací API.
+%span.label
+  Vylepšení výkonu
+%ul
+  %li GC pomocí bitmap marking.
+  %li Jaderná funkce <em>require</em>.
+  %li Operace s desetinnými čísly.
+  %li Odbavování metod ve VM.
+
+%p Experimentálně je ve vydání nový koncept modularity v Ruby, Refinements.
+
+%span.label
+  Nekompamtibility
+%ul
+  %li Iconv byl odstraněn. Náhradou je String#encode.
+  %li #lines, #chars, #codepoints, #bytes nyní vrací Array namísto Enumerator. Pro Enumerator existuje metoda #each_line.
+  %li Object#inspect už není delegován na #to_s
+
+%h3 Odkazy na články
+%ul
+  %li=link_to 'Ruby 2.0.0-p0 is released','http://www.ruby-lang.org/en/news/2013/02/24/ruby-2-0-0-p0-is-released/'
+  %li=link_to 'Ruby 2.0.0 by Example','http://blog.marc-andre.ca/2013/02/23/ruby-2-by-example'
+  %li=link_to 'Preview of the new features in Ruby 2.0.0','http://globaldev.co.uk/2012/11/ruby-2-0-0-preview-features/'
+  %li=link_to 'Ruby 2.0 on Rails','https://speakerdeck.com/a_matsuda/ruby-2-dot-0-on-rails'
+  %li=link_to 'A Look at Ruby 2.0','http://rubysource.com/a-look-at-ruby-2-0/'
+
+
+

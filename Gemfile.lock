@@ -1,6 +1,5 @@
-GIT
-  remote: https://github.com/fanda/middleman-blog
-  revision: 58a132dedb29b20e67e9ac35407155b62c243f92
+PATH
+  remote: lib/middleman-blog
   specs:
     middleman-blog (3.2.0)
       middleman-core (~> 3.0)
