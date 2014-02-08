@@ -26,6 +26,7 @@ production:
   ga_id: xxx
 ```
 
+
 Konfigurační soubor pak do Ruby on Rails aplikace načtu při jejím startu pomocí iniciačního souboru *config/initializers/app_config.rb*, ve kterém se vytvoří asociativní pole typu *OpenStruct* obsahující konfigurací, k níž pak přistupuji jakobych volal funkce třídy. Například **AppConfig.currency** (=> 'Kč'). Všimněte si, že nemusím zadávat, zda chci hodnoty pro vývojové nebo produkční prostředí.
 
 ```ruby
@@ -92,4 +93,3 @@ end
 AppConfig = h2ostruct[h2ostruct, app_config]
 ```
 
-Vnořená konfigurace je nyní přístupnější a já jsem při programování šťastnější :)

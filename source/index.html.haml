@@ -2,6 +2,9 @@
 title: Fanda Internetu
 pageable: true
 ---
+- content_for :sidebar do
+  = partial '/partials/sidebar'
+
 %section
   - page_articles.each do |article|
     %article.inlist{"style"=>"display: block"}
@@ -10,7 +13,7 @@ pageable: true
         = article.summary
       %footer
         - if article.tags.any?
-          %span.label.label-red
+          %span.label.secondary.radius
             = article.tags.last.capitalize unless article.tags.empty?
   .paginate.out
     .page-previous

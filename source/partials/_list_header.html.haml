@@ -1,5 +1,4 @@
-%hgroup
-  %h2
-    %a{:href => article.url}= article.title
-  %h2.subheader
+%h1
+  %small
     %time= article.date.strftime('%e. %_m. %Y')
+  = link_to article.title, article.url

@@ -1,36 +1,44 @@
 %header#header
-  #noc
   .content
     %h1#sitename
       %a{:href => '/'} Fanda Internetu
-    %nav#primary
-      %ul.links.primary-links.tac
-        %li=link_to 'Audio', '/audio/'
-        %li=link_to 'Internet', '/internet/'
-        %li
-          =link_to 'IT', '/it/'
-          %ul.links.primary-inner
-            %li=link_to 'C++', '/it/cpp'
-            %li=link_to 'Drupal', '/it/drupal'
-            %li=link_to 'iPhone', '/it/iphone'
-            %li=link_to 'Linux', '/it/linux'
-            %li=link_to 'Perl', '/it/perl'
-            %li=link_to 'Python', '/it/python'
-            %li=link_to 'Ruby', '/it/ruby'
-            %li=link_to 'Ostatni', '/it/ostatni'
-        %li=link_to 'Knihy', '/knihy'
-        %li=link_to 'Matematika', '/matematika/'
-        %li=link_to 'Odkazy', '/odkazy/'
-        %li
-          =link_to 'Ostatní', '/ostatni/'
-          %ul.links.primary-inner
-            %li=link_to 'Pyramidy', '/ostatni/pyramidy'
-        %li
-          =link_to 'Seberozvoj', '/seberozvoj/'
-          %ul.links.primary-inner
-            %li=link_to 'Jóga', '/seberozvoj/joga'
-
-        %li=link_to 'Video', '/video/'
+  #topmenu.content
+    %nav.top-bar{:data => {topbar: true, options: "is_hover: true"}}
+      %section.top-bar-section
+        %ul.title-area
+          %li.name
+        %ul
+          %li=link_to 'Audio', '/audio/'
+          %li.divider
+          %li=link_to 'Internet', '/internet/'
+          %li.divider
+          %li.has-dropdown
+            =link_to 'IT', '/it/'
+            %ul.dropdown
+              %li=link_to 'C++', '/it/cpp'
+              %li=link_to 'Drupal', '/it/drupal'
+              %li=link_to 'iPhone', '/it/iphone'
+              %li=link_to 'Linux', '/it/linux'
+              %li=link_to 'Perl', '/it/perl'
+              %li=link_to 'Python', '/it/python'
+              %li=link_to 'Ruby', '/it/ruby'
+              %li=link_to 'Ostatní', '/it/ostatni'
+          %li.divider
+          %li=link_to 'Knihy', '/knihy'
+          %li.divider
+          %li=link_to 'Matematika', '/matematika/'
+          %li.divider
+          %li=link_to 'Odkazy', '/odkazy/'
+          %li.divider
+          %li
+            =link_to 'Ostatní', '/ostatni/'
+          %li.divider
+          %li.has-dropdown
+            =link_to 'Seberozvoj', '/seberozvoj/'
+            %ul.dropdown
+              %li=link_to 'Jóga', '/seberozvoj/joga'
+          %li.divider
+          %li=link_to 'Video', '/video/'
 
 #featured.content.tac
   %cite
