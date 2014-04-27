@@ -20,7 +20,7 @@ pageable: true
       - if prev_page
         = link_to '‹ Předchozí strana', prev_page
     .page-number
-      %span.label.color-red
+      %span.color-red
         = "#{page_number} / #{num_pages}"
     .page-next
       - if next_page

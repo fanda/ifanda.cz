@@ -1,7 +1,4 @@
 %header#header
-  .content
-    %h1#sitename
-      %a{:href => '/'} Fanda Internetu
   #topmenu.content
     %nav.top-bar{:data => {topbar: true, options: "is_hover: true"}}
       %section.top-bar-section
@@ -28,7 +25,13 @@
           %li.divider
           %li=link_to 'Matematika', '/matematika/'
           %li.divider
-          %li=link_to 'Odkazy', '/odkazy/'
+          %li.has-dropdown
+            =link_to 'Odkazy', '/odkazy/'
+            %ul.dropdown
+              %li= link_to 'Vystavuj', 'http://vystavuj.cz'
+              %li= link_to 'Lovci snů', 'http://lovcisnu.cz'
+              %li= link_to 'Satoshi Nakamoto', 'http://satoshi.nakamoto.cz', title: 'Kryptoměny, Bitcoin, diskuze'
+              %li= link_to 'Techsquat', 'http://www.techsquat.com/'
           %li.divider
           %li
             =link_to 'Ostatní', '/ostatni/'
@@ -40,7 +43,7 @@
           %li.divider
           %li=link_to 'Video', '/video/'
 
-#featured.content.tac
+-#featured.content.tac
   %cite
     Od audio, až po video.
 

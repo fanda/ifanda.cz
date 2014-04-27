@@ -1,154 +1,40 @@
-
-server {
-  server_name extranea.ifanda.cz;
-
-  location / {
-    return 301 http://ifanda.cz/seberozvoj;
+server {   server_name extranea.ifanda.cz;
+  location / { return 301 http://ifanda.cz/seberozvoj; }
+  location /joga { rewrite ^.* http://ifanda.cz/seberozvoj/joga permanent; } }
+  location ~ /merv-fasil(.*) {     rewrite ^.* http://ifanda.cz/knihy/merv-fasil$1 permanent; }
+  location ~ /william-blake-zpevy-nevinnosti(.*) {     rewrite ^.* http://ifanda.cz/knihy/william-blake/zpevy-nevinnosti$1 permanent; }
+  location ~ /hagakure-moudrost-samuraju {     rewrite ^.* http://ifanda.cz/knihy/hagakure-moudrost-samuraju permanent; }
+  location ~ /kvetoslav-minarik/dznanajoga/o-dznanajoze(.*) {     rewrite ^.* http://ifanda.cz/knihy/knihy/kvetoslav-minarik/o-dznanajoze$1 permanent; }
+  location ~ /procitni-a-chechtej-se(.*) {     rewrite ^.* http://ifanda.cz/knihy/procitni-chechtej-se$1 permanent; }
+  location ~ /otokar-brezina(.*) {     rewrite ^.* http://ifanda.cz/knihy/otokar-brezina$1 permanent; }
+  location ~ /filosofie/hermetismus/hermes-trismegistos-jeho-zasveceni(.*) {     rewrite ^.* http://ifanda.cz/knihy/hermes-trismegistos-jeho-zasveceni$1 permanent; }
   }
-
-  location /joga {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga permanent;
-  }
-
-  location ~ /merv-fasil(.*) {
-    rewrite ^.* http://ifanda.cz/knihy/merv-fasil$1 permanent;
-  }
-
-  location ~ /william-blake-zpevy-nevinnosti(.*) {
-    rewrite ^.* http://ifanda.cz/knihy/william-blake/zpevy-nevinnosti$1 permanent;
-  }
-
-  location ~ /hagakure-moudrost-samuraju {
-    rewrite ^.* http://ifanda.cz/knihy/hagakure-moudrost-samuraju permanent;
-  }
-
-  location ~ /kvetoslav-minarik/dznanajoga/o-dznanajoze(.*) {
-    rewrite ^.* http://ifanda.cz/knihy/knihy/kvetoslav-minarik/o-dznanajoze$1 permanent;
-  }
-
-  location ~ /procitni-a-chechtej-se(.*) {
-    rewrite ^.* http://ifanda.cz/knihy/procitni-chechtej-se$1 permanent;
-  }
-
-  location ~ /otokar-brezina(.*) {
-    rewrite ^.* http://ifanda.cz/knihy/otokar-brezina$1 permanent;
-  }
-
-  location ~ /filosofie/hermetismus/hermes-trismegistos-jeho-zasveceni(.*) {
-    rewrite ^.* http://ifanda.cz/knihy/hermes-trismegistos-jeho-zasveceni$1 permanent;
-  }
-
-
-  location /staroveke-kultury/cina/i-ting/cgjung-o-i-tingu {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-02-25-cgjung-o-i-tingu permanent;
-  }
-
-  location /kvetoslav-minarik/kvetoslav-minarik-o-minulosti-pritomnosti-a-budoucnosti {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-02-25-kvetoslav-minarik-o-minulosti-pritomnosti-a-budoucnosti permanent;
-  }
-
-  location /ukazka-knihy/pocatky-penez-a-chvala-zlata {
-    rewrite ^.* http://ifanda.cz/ostatni/2010-02-28-pocatky-penez-a-chvala-zlata permanent;
-  }
-
-  location /nazory/bod-nula-systemoveho-kolapsu {
-    rewrite ^.* http://ifanda.cz/ostatni/2010-03-08-bod-nula-systemoveho-kolapsu permanent;
-  }
-
-  location /filosofie/krestanstvi/evangelium-sv-tomase {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-08-16-evangelium-sv-tomase permanent;
-  }
-
-  location /kvetoslav-minarik/odkaz-kvetoslava-minarika-z-roku-1964 {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2011-02-24-odkaz-kvetoslava-minarika-z-roku-1964 permanent;
-  }
-
-  location /nazory/princip-skromnosti {
-    rewrite ^.* http://ifanda.cz/ostatni/2011-04-30-princip-skromnosti permanent;
-  }
-
-  location /lilith-hebrejska-baj {
-    rewrite ^.* http://ifanda.cz/ostatni/2011-04-30-lilith-hebrejska-baj permanent;
-  }
-
-  location /nazory/jan-keller-dva-druhy-pravicovych-volicu {
-    rewrite ^.* http://ifanda.cz/ostatni/2013-01-21-jan-keller-dva-druhy-pravicovych-volicu permanent;
-  }
-
-  location /otevreny-dopis-zodpovednym-v-politice-hospodarstvi-a-vede {
-    rewrite ^.* http://ifanda.cz/ostatni/2013-03-30-otevreny-dopis-zodpovednym-v-politice-hospodarstvi-a-vede permanent;
-  }
-
-  location /nazory/zkusenost-a-zpusob-zivota {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2013-05-18-zkusenost-a-zpusob-zivota permanent;
-  }
-
-  location /z-rozhovoru-s-krisnamurtim {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2013-05-18-z-rozhovoru-s-krisnamurtim permanent;
-  }
-
-  location /joga/bhaktijoga {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-07-bhaktijoga permanent;
-  }
-
-  location /joga/karmajoga {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-07-karmajoga permanent;
-  }
-
-  location /joga/patandzali-joga-sutra {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-patandzaliho-system-jogy permanent;
-  }
-
-  location /joga/jama {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-01-22-jama permanent;
-  }
-
-  location /joga/nijama {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-01-22-nijama permanent;
-  }
-
-  location /kvetoslav-minarik/proc-vyvijet-radostnou-naladu {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-22-proc-vyvijet-radostnou-naladu permanent;
-  }
-
-  location /staroveke-kultury/egypt/pyramidy/egyptske-pyramidy-odhaluji-nove-skutecnosti {
-    rewrite ^.* http://ifanda.cz/ostatni/pyramidy/2010-01-25-egyptske-pyramidy-odhaluji-nove-skutecnosti permanent;
-  }
-
-  location /staroveke-kultury/egypt/pyramidy/egyptske-pyramidy-odhaluji-nove-skutecnosti-2 {
-    rewrite ^.* http://ifanda.cz/ostatni/pyramidy/2010-01-25-egyptske-pyramidy-odhaluji-nove-skutecnosti-2 permanent;
-  }
-
-  location /staroveke-kultury/egypt/hadi-sila-ve-starem-egypte {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-30-hadi-sila-ve-starem-egypte permanent;
-  }
-
-  location /leceni-a-medicina/proc-je-dulezita-ocista-organismu {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-30-proc-je-dulezita-ocista-organism permanent;
-  }
-
-  location /staroveke-kultury/egypt/pyramidy/egypt-stale-plny-zahad {
-    rewrite ^.* http://ifanda.cz/ostatni/pyramidy/2010-01-30-egypt-stale-plny-zahad permanent;
-  }
-
-  location /staroveke-kultury/egypt/univerzalni-zaklad-duchovna {
-    rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-30-univerzalni-zaklad-duchovna permanent;
-  }
-
-  location /joga/mudry-jogicka-gesta-rukou {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-18-mudry-jogicka-gesta-rukou permanent;
-  }
-
-  location /joga/druhy-jogy {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-druhy-jogy permanent;
-  }
-
-  location /joga/patandzaliho-system-jogy {
-    rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-patandzaliho-system-jogy permanent;
-  }
-
-  location /nazory/rozhovor-syna-s-otcem-pravdepodobne-v-usa {
-    rewrite ^.* http://ifanda.cz/ostatni/2010-02-14-rozhovor-syna-s-otcem-pravdepodobne-v-usa permanent;
-  }
-
-}
+  location /staroveke-kultury/cina/i-ting/cgjung-o-i-tingu {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-02-25-cgjung-o-i-tingu permanent; }
+  location /kvetoslav-minarik/kvetoslav-minarik-o-minulosti-pritomnosti-a-budoucnosti {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-02-25-kvetoslav-minarik-o-minulosti-pritomnosti-a-budoucnosti permanent; }
+  location /ukazka-knihy/pocatky-penez-a-chvala-zlata {     rewrite ^.* http://ifanda.cz/ostatni/2010-02-28-pocatky-penez-a-chvala-zlata permanent; }
+  location /nazory/bod-nula-systemoveho-kolapsu {     rewrite ^.* http://ifanda.cz/ostatni/2010-03-08-bod-nula-systemoveho-kolapsu permanent; }
+  location /filosofie/krestanstvi/evangelium-sv-tomase {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-08-16-evangelium-sv-tomase permanent; }
+  location /kvetoslav-minarik/odkaz-kvetoslava-minarika-z-roku-1964 {     rewrite ^.* http://ifanda.cz/seberozvoj/2011-02-24-odkaz-kvetoslava-minarika-z-roku-1964 permanent; }
+  location /nazory/princip-skromnosti {     rewrite ^.* http://ifanda.cz/ostatni/2011-04-30-princip-skromnosti permanent; }
+  location /lilith-hebrejska-baj {     rewrite ^.* http://ifanda.cz/ostatni/2011-04-30-lilith-hebrejska-baj permanent; }
+  location /nazory/jan-keller-dva-druhy-pravicovych-volicu {     rewrite ^.* http://ifanda.cz/ostatni/2013-01-21-jan-keller-dva-druhy-pravicovych-volicu permanent; }
+  location /otevreny-dopis-zodpovednym-v-politice-hospodarstvi-a-vede {     rewrite ^.* http://ifanda.cz/ostatni/2013-03-30-otevreny-dopis-zodpovednym-v-politice-hospodarstvi-a-vede permanent; }
+  location /nazory/zkusenost-a-zpusob-zivota {     rewrite ^.* http://ifanda.cz/seberozvoj/2013-05-18-zkusenost-a-zpusob-zivota permanent; }
+  location /z-rozhovoru-s-krisnamurtim {     rewrite ^.* http://ifanda.cz/seberozvoj/2013-05-18-z-rozhovoru-s-krisnamurtim permanent; }
+  location /joga/bhaktijoga {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-07-bhaktijoga permanent; }
+  location /joga/karmajoga {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-07-karmajoga permanent; }
+  location /joga/patandzali-joga-sutra {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-patandzaliho-system-jogy permanent; }
+  location /joga/jama {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-01-22-jama permanent; }
+  location /joga/nijama {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-01-22-nijama permanent; }
+  location /kvetoslav-minarik/proc-vyvijet-radostnou-naladu {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-22-proc-vyvijet-radostnou-naladu permanent; }
+  location /staroveke-kultury/egypt/pyramidy/egyptske-pyramidy-odhaluji-nove-skutecnosti {     rewrite ^.* http://ifanda.cz/ostatni/pyramidy/2010-01-25-egyptske-pyramidy-odhaluji-nove-skutecnosti permanent; }
+  location /staroveke-kultury/egypt/pyramidy/egyptske-pyramidy-odhaluji-nove-skutecnosti-2 {     rewrite ^.* http://ifanda.cz/ostatni/pyramidy/2010-01-25-egyptske-pyramidy-odhaluji-nove-skutecnosti-2 permanent; }
+  location /staroveke-kultury/egypt/hadi-sila-ve-starem-egypte {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-30-hadi-sila-ve-starem-egypte permanent; }
+  location /leceni-a-medicina/proc-je-dulezita-ocista-organismu {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-30-proc-je-dulezita-ocista-organism permanent; }
+  location /staroveke-kultury/egypt/pyramidy/egypt-stale-plny-zahad {     rewrite ^.* http://ifanda.cz/ostatni/pyramidy/2010-01-30-egypt-stale-plny-zahad permanent; }
+  location /staroveke-kultury/egypt/univerzalni-zaklad-duchovna {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-01-30-univerzalni-zaklad-duchovna permanent; }
+  location /joga/mudry-jogicka-gesta-rukou {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-18-mudry-jogicka-gesta-rukou permanent; }
+  location /joga/druhy-jogy {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-druhy-jogy permanent; }
+  location /joga/patandzaliho-system-jogy {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-patandzaliho-system-jogy permanent; }
+  location /nazory/rozhovor-syna-s-otcem-pravdepodobne-v-usa {     rewrite ^.* http://ifanda.cz/ostatni/2010-02-14-rozhovor-syna-s-otcem-pravdepodobne-v-usa permanent; }
+  }}
