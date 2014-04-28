@@ -1,3 +1,7 @@
+// Foundation by ZURB
+// foundation.zurb.com
+// Licensed under MIT Open Source
+
 @import "global";
 
 $include-html-type-classes: $include-html-classes !default;
@@ -13,11 +17,11 @@ $header-bottom-margin: .5rem !default;
 $header-text-rendering: optimizeLegibility !default;
 
 // We use these to control header font sizes
-$h1-font-size: rem-calc(25) !default;
-$h2-font-size: rem-calc(23) !default;
-$h3-font-size: rem-calc(21) !default;
-$h4-font-size: rem-calc(19) !default;
-$h5-font-size: rem-calc(16) !default;
+$h1-font-size: rem-calc(44) !default;
+$h2-font-size: rem-calc(37) !default;
+$h3-font-size: rem-calc(27) !default;
+$h4-font-size: rem-calc(23) !default;
+$h5-font-size: rem-calc(18) !default;
 $h6-font-size: 1rem !default;
 
 // These control how subheaders are styled.
@@ -49,8 +53,9 @@ $code-font-weight: bold !default;
 
 // We use these to style anchors
 $anchor-text-decoration: none !default;
+$anchor-text-decoration-hover: none !default;
 $anchor-font-color: $primary-color !default;
-$anchor-font-color-hover: scale-color($primary-color, $lightness: -14%) !default;
+$anchor-font-color-hover: scale-color($anchor-font-color, $lightness: -14%) !default;
 
 // We use these to style the <hr> element
 $hr-border-width: 1px !default;
@@ -59,6 +64,10 @@ $hr-border-color: #ddd !default;
 $hr-margin: rem-calc(20) !default;
 
 // We use these to style lists
+$list-font-family: $paragraph-font-family !default;
+$list-font-size: $paragraph-font-size !default;
+$list-line-height: $paragraph-line-height !default;
+$list-margin-bottom: $paragraph-margin-bottom !default;
 $list-style-position: outside !default;
 $list-side-margin: 1.1rem !default;
 $list-ordered-side-margin: 1.4rem !default;
@@ -102,6 +111,48 @@ $microformat-abbr-padding: rem-calc(0 1) !default;
 $microformat-abbr-font-weight: bold !default;
 $microformat-abbr-font-decoration: none !default;
 
+// Text alignment class names
+$align-class-names:
+  small-only,
+  small,
+  medium-only,
+  medium,
+  large-only,
+  large,
+  xlarge-only,
+  xlarge,
+  xxlarge-only,
+  xxlarge;
+
+// Text alignment breakpoints
+$align-class-breakpoints:
+  $small-only,
+  $small-up,
+  $medium-only,
+  $medium-up,
+  $large-only,
+  $large-up,
+  $xlarge-only,
+  $xlarge-up,
+  $xxlarge-only,
+  $xxlarge-up;
+
+// Generates text align and justify classes
+@mixin align-classes{
+  .text-left    { text-align: left !important; }
+  .text-right   { text-align: right !important; }
+  .text-center  { text-align: center !important; }
+  .text-justify { text-align: justify !important; }
+
+  @for $i from 1 through length($align-class-names) {
+    @media #{(nth($align-class-breakpoints, $i))} {
+      .#{(nth($align-class-names, $i))}-text-left { text-align: left !important; }
+      .#{(nth($align-class-names, $i))}-text-right   { text-align: right !important; }
+      .#{(nth($align-class-names, $i))}-text-center  { text-align: center !important; }
+      .#{(nth($align-class-names, $i))}-text-justify { text-align: justify !important; }
+    }
+  }
+}
 
 //
 // Typography Placeholders
@@ -122,6 +173,8 @@ $microformat-abbr-font-decoration: none !default;
 }
 @include exports("type") {
   @if $include-html-type-classes {
+    // Responsive Text alignment
+    @include align-classes;
 
     /* Typography resets */
     div,
@@ -154,7 +207,12 @@ $microformat-abbr-font-decoration: none !default;
       line-height: inherit;
 
       &:hover,
-      &:focus { color: $anchor-font-color-hover; }
+      &:focus {
+        color: $anchor-font-color-hover;
+        @if $anchor-text-decoration-hover != $anchor-text-decoration {
+        	text-decoration: $anchor-text-decoration-hover;
+        }
+      }
 
       img { border:none; }
     }
@@ -208,7 +266,7 @@ $microformat-abbr-font-decoration: none !default;
       border: $hr-border-style $hr-border-color;
       border-width: $hr-border-width 0 0;
       clear: both;
-      margin: $hr-margin 0 ($hr-margin - rem-calc(1));
+      margin: $hr-margin 0 ($hr-margin - rem-calc($hr-border-width));
       height: 0;
     }
 
@@ -240,11 +298,11 @@ $microformat-abbr-font-decoration: none !default;
     ul,
     ol,
     dl {
-      font-size: $paragraph-font-size;
-      line-height: $paragraph-line-height;
-      margin-bottom: $paragraph-margin-bottom;
+      font-size: $list-font-size;
+      line-height: $list-line-height;
+      margin-bottom: $list-margin-bottom;
       list-style-position: $list-style-position;
-      font-family: $paragraph-font-family;
+      font-family: $list-font-family;
     }
 
     ul {
