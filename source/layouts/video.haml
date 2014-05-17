@@ -3,9 +3,8 @@
   %article{"style"=>"display: block"}
     %header
       %h1
-       %small
+        %small
           %time= current_article.date.strftime('%e. %_m. %Y')
-        = current_article.title
+          = current_article.title
     = yield
     %footer
-
