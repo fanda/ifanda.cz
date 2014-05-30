@@ -1,6 +1,10 @@
 %header#header
-  #topmenu.content
-    %nav.top-bar{:data => {topbar: true, options: "is_hover: true"}}
+  #sitename
+    %h1.wrapper
+      %a{:href => '/'} Fanda Internetu
+
+  #topmenu
+    %nav.wrapper.top-bar{:data => {topbar: true, options: "is_hover: true"}}
       %section.top-bar-section
         %ul.title-area
           %li.name
@@ -43,9 +47,6 @@
           %li.divider
           %li=link_to 'Video', '/video/'
 
-  #sitename.content
-    %h1
-      %a{:href => '/'} Fanda Internetu
 
 -#featured.content.tac
   %cite

@@ -2,7 +2,7 @@
 @import 'foundation'
 @import 'syntax'
 
-$max_width: 940px
+$max_width: 1170px
 
 $main_red: #FD3838
 $brit_red: #E04613
@@ -20,11 +20,19 @@ $main_blue: #336699
 .bold
   font-weight: 600
 
-.content, .wrapper
+.row
+  max-width: $max_width + 56px
+.wrapper
+  max-width: $max_width
+  margin: auto
+.content
   max-width: $max_width
   margin: 24px auto
 .container.row
   padding-left: 1em
+
+body
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
 
 a, .color-red, #sitename a:hover
   color: $main_red
@@ -36,9 +44,6 @@ a, .color-red, #sitename a:hover
   .content
     .inn
       padding: 11px
-
-#featured
-  width: 894px
 
 #content
   min-height: 400px
@@ -55,15 +60,33 @@ a, .color-red, #sitename a:hover
   padding-bottom: 1em
 
 #topmenu
-  border-bottom: 2px solid $main_red
+  border-top: 2px solid $main_red
+  background: $main_red
+  *
+    background: $main_red
   nav
     li
-      text-align: center
+      text-align: left
       a
         padding-left: 30px
         padding-right: 30px
+        font-size: 16px
       ul li
         text-align: left
+  .top-bar-section
+    .divider
+      border: $main_red
+
+#sitename
+  background: #222
+  h1
+    font-size: 26px
+    padding: 6px 0
+  a
+    color: #fdfdfd
+
+#header
+  margin-bottom: 3em
 
 article
   margin-bottom: 1.5em
@@ -73,14 +96,14 @@ article
       font-size: 100%
       font-variant: italic
       display: inline-block
-      width: 112px
+      min-width: 12ex
     a
       color: $main_red
       text-decoration: none
       &:hover
         text-decoration: underline
-    h2
-      font-size: 1.75rem
+    h1
+      font-size: 30px
     margin-bottom: 0.5em
   p
     margin-bottom: 0.5em
@@ -93,13 +116,18 @@ article
   footer
     clear: both
 
+article.inlist
+  header
+    h2
+      font-size: 30px
+
 .list-articles
   list-style: none
   time
     display: inline-block
     min-width: 12ex
   h1
-    font-size: rem-calc(20)
+    font-size: 30px
 
 
 .book-navigation .page-links, .paginate
