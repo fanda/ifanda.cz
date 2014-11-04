@@ -1,6 +1,6 @@
 server {   server_name extranea.ifanda.cz;
   location / { return 301 http://ifanda.cz/seberozvoj; }
-  location /joga { rewrite ^.* http://ifanda.cz/seberozvoj/joga permanent; } }
+  location /joga { rewrite ^.* http://ifanda.cz/seberozvoj/joga permanent; }
   location ~ /merv-fasil(.*) {     rewrite ^.* http://ifanda.cz/knihy/merv-fasil$1 permanent; }
   location ~ /william-blake-zpevy-nevinnosti(.*) {     rewrite ^.* http://ifanda.cz/knihy/william-blake/zpevy-nevinnosti$1 permanent; }
   location ~ /hagakure-moudrost-samuraju {     rewrite ^.* http://ifanda.cz/knihy/hagakure-moudrost-samuraju permanent; }
@@ -8,7 +8,6 @@ server {   server_name extranea.ifanda.cz;
   location ~ /procitni-a-chechtej-se(.*) {     rewrite ^.* http://ifanda.cz/knihy/procitni-chechtej-se$1 permanent; }
   location ~ /otokar-brezina(.*) {     rewrite ^.* http://ifanda.cz/knihy/otokar-brezina$1 permanent; }
   location ~ /filosofie/hermetismus/hermes-trismegistos-jeho-zasveceni(.*) {     rewrite ^.* http://ifanda.cz/knihy/hermes-trismegistos-jeho-zasveceni$1 permanent; }
-  }
   location /staroveke-kultury/cina/i-ting/cgjung-o-i-tingu {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-02-25-cgjung-o-i-tingu permanent; }
   location /kvetoslav-minarik/kvetoslav-minarik-o-minulosti-pritomnosti-a-budoucnosti {     rewrite ^.* http://ifanda.cz/seberozvoj/2010-02-25-kvetoslav-minarik-o-minulosti-pritomnosti-a-budoucnosti permanent; }
   location /ukazka-knihy/pocatky-penez-a-chvala-zlata {     rewrite ^.* http://ifanda.cz/ostatni/2010-02-28-pocatky-penez-a-chvala-zlata permanent; }
@@ -37,4 +36,4 @@ server {   server_name extranea.ifanda.cz;
   location /joga/druhy-jogy {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-druhy-jogy permanent; }
   location /joga/patandzaliho-system-jogy {     rewrite ^.* http://ifanda.cz/seberozvoj/joga/2010-02-15-patandzaliho-system-jogy permanent; }
   location /nazory/rozhovor-syna-s-otcem-pravdepodobne-v-usa {     rewrite ^.* http://ifanda.cz/ostatni/2010-02-14-rozhovor-syna-s-otcem-pravdepodobne-v-usa permanent; }
-  }}
+  }
