@@ -10,6 +10,6 @@
         %section#content.content.threequarter
           .inn= yield
         %aside#sidebar-right.wrapper.quarter
-          .inn Sidebar right
+          .inn= yield_content :sidebar
 
       = partial '/layouts/footer'

@@ -10,6 +10,7 @@
         %section#content.large-9.columns
           .inn= yield
         %aside#sidebar-right.large-3.columns
-          .inn= yield_content :sidebar
+          .inn
+            = yield_content :sidebar
 
       = partial '/layouts/footer'

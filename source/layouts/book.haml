@@ -2,6 +2,8 @@
 pageable: true
 per_page: 11
 ---
+- content_for :sidebar do
+  = partial '/partials/affiliate_300x600'
 
 - wrap_layout :layout do
   %article{"style"=>"display: block"}
