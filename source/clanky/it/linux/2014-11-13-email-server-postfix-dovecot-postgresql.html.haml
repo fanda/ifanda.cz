@@ -1,0 +1,138 @@
+---
+title: E-mail server s Postfix, Dovecot a PostgreSQL
+date: 2014-11-13 10:28
+layout: article
+comments: false
+tags: [it, linux]
+geshifilter: true
+---
+:plain
+  Po několika letech jsem byl znovu vystaven útrapám s nastavováním e-mailového serveru na Linuxu. Ne, že by se jednalo o nějak vyjímečně složitou záležitost, ale triviální problém to také není, a proto bych svůj postup chtěl zapsat - pro sebe i pro ostatní, kteří někdy někde budou muset nastavovat programy Postfix a Dovecot v součinosti s databází PostgreSQL.
+
+SPLIT
+
+%h2 Úvod
+
+:markdown
+  V minulosti jsem se pokusil celý [instalační proces](http://github.com/fanda/rmails) automatizovat, ale výsledná aplikace se nedá považovat za úspěch. Jedná se o Ruby on Rails aplikaci, která pomocí knihovny pro manipulaci s operačním systémem, spravuje nastavení, uživatele a přesměrování e-mailového serveru. Aplikace by teoreticky měla fungovat na většině linuxových distribucí, ale ty se často mění, takže vyladit a udržovat funkční instalační rutiny zabírá hodně času. Rozhodl jsem se vývoj na projektu zastavit a vyjma architektury serveru jsem jej při práci nepoužil.
+
+%p
+  Avšak i architekturu jsem malinko změnil. Původní je popsána [zde](http://programator.pro/pages/rmails/#cooperation). Ta nová vypadá zhruba takto:
+  %pre
+    :plain
+      --smtp--> [ Postfix ] --smtp--> [DSPAM] --smtp--> [ Postfix ] --lda--> [DOVECOT] ---> (virtual Mailbox)
+             |
+           DKIM
+
+  Rozdíl spočívá v odstranění Amawis a Spamassasin; zůstává jen Dspam, který reinjektuje Postfix, a také se změnilo databázové schéma, jelikož server má být součástí většího systému, kde by mělo fungovat jediné přihlášení napříč všemy systémy, což popíšu dále v textu.
+
+%h2 Postup nastavení e-mailového serveru
+
+:plain
+  Je zřejmé, že server se skládá z několika komponent, které je potřeba nainstalovat a nastavit v operačním systému. Já jsem jako OS použil Debian Wheezy, ale obecně lze postup a především konfigurační soubory použít pro jakýkoliv Linux/Unix. Postupoval byl následovný:
+
+%ul
+  %li= link_to 'Instalace komponent', '#apt'
+  %li= link_to 'Nastavení PostgreSQL', '#psql'
+  %li= link_to 'Nastavení Postfix', '#postfix'
+  %li= link_to 'Nastavení Dovecot', '#dovecot'
+  %li= link_to 'Nastavení Dspam', '#dspam'
+  %li= link_to 'Generování kryptografických klíčů', '#ssl'
+  %li= link_to 'Testování protokolů SMTP a IMAP telnetem', '#telnet'
+  %li= link_to 'Nastavení DKIM a SPF', '#dkimspf'
+  %li= link_to 'Zabezpečení systému', '#hardening'
+
+:plain
+  Nebudu zde popisovat, jak jsem k jednotlivým konfiguracím dospěl, jen vystavím konfigurační soubory komponent a zmíním důležité věci. Informací ohledně e-mailových serverů je na Internetu dostatek, hlavně v angličtině. Nepovažuju konfiguraci za dokonalou, ale každopádně funguje a pro zajištění funkční pošty pro několik virtuálních domén docela stačí.
+
+%h3#apt Instalace programů na Debian
+:plain
+  Debian je jedna z nejrozšířenějších linových distribucí na serverech a v repozitářích má velké množství balíčků, které ovšem ve stabilním vydání nemusí být nejaktuálnější. Naštěstí všechny programy, které e-mailový server podle návrhu vyžaduje jsou v repozitářích přítomny, přestože některé (Dovecot > 2.0) v jsou jen v tzv. backports repozitářích.
+:markdown
+  [Přidání backports repozitářů](http://backports.debian.org/Instructions/) na Debian Wheezy je jednoduché:
+  1. přidáme do */etc/apt/sources.list* řádek
+  ```
+  deb http://http.debian.net/debian wheezy-backports main
+  ```
+  2. spustíme jako root příkaz: *apt-get update*.
+:markdown
+  Zde ještě poznámka ohledně databáze. Pokud chcete, aby Postgre databáze byla na stejném stroji jako zbytek systému, doporučuju Vám nainstalovat nejnovější verzi, která ovšem není obsažena v repozitářích Debianu a opět musíte upravit */etc/apt/sources.list*, abyste ji mohli nainstalovat ([podrobnosti v angličtině](https://wiki.postgresql.org/wiki/Apt)). Já reálně používám dedikovaný databázový server, takže jsem instaloval jen PostgreSQL klienta.
+:markdown
+  Nyní lze instalovat programy. Pro instalaci Postfix, Dspam a OpenDKIM jako superuživatel spusťte:
+  ```
+  apt-get install build-essential postfix postfix-pgsql postfix-pcre dspam libdspam7-drv-pgsql opendkim
+  ```
+  a následně také nainstalujte Dovecot, ovšem z backports:
+  ```
+  apt-get -t wheezy-backports install dovecot dovecot-dev dovecot-antispam dovecot-lmtpd dovecot-pgsql
+  ```
+
+:plain
+  Protože správce balíčků Apt automaticky instaluje závislé balíčky, měly by nyní být všechny komponenty připraveny pro konfiguraci.
+
+
+%h3#psql Databázové schéma
+:markdown
+  Databáze má 3 tabulky, kam se ukládají data o virtuálních doménách, uživatelích a přesměrování. Kromě správného nastavení přístupu k databázi (soubor pg_hba.conf), se konfigurace vzdálené databáze nijak neliší od konfigurace lokálně nainstalované databáze. Dokonce vlastně ani není co nastavovat, stačí vytvořit databázi pomocí [tohoto SQL skriptu](LINK). Jen nahraďte "xxx" za jméno databázového uživatele, který bude vlastnit databázi a k tomu vytvořte databázové uživatele "postfix" a "dovecot", kteří budou mít omezená přístupová práva k databázi tak, jak definuje uvedený SQL skript.
+
+%h3#postfix Nastavení programu Postfix
+:markdown
+  Tady už to začíná být zajímavější. Postfix v systému slouží jako [MTA](LINK), takže přijímá a odesílá poštu tj. implementuje SMTP protokol. Postfix je tvořen z několika malých programů, které jsou řízeny programem *master*. Minimálně je potřeba nastavit program *master* (soubor */etc/postfix/master.cf*) a pak způsob, jakým se budou e-maily přijímat a odesílat (soubor */etc/postfix/main.cf*). Protože používáme databázi, musí se nakonfigurovat i přístupy k databázi.
+
+:markdown
+  Zde jsou hotové [main.cf](LINK) a [master.cf](LINK). Nutno zmínit, že autentizace uživatele pro odeslání e-mailu se provádí pomocí Dovecot a že server vynucuje zabezpečené připojení, takže je potřeba vygenerovat certifikáty (viz dále v textu). Postfix při příjmu bude kontrolovat některé DNS záznamy domény a v případě potřeby lze nastavit, že bude kontrolovat, jestli se odesílatel nenachází na veřejně přístupných blacklistech.
+
+:markdown
+  Nastavení přístupu k informacích uloženým v databázi je celkem přímočaré - jedná se o sadu souborů, kde jsou vždy přístupové údaje k databázi a dotaz, který se má vykonat. Jedná se o soubory [](LINK), [](LINK), [](LINK), [](LINK) a [](LINK), kde stačí změnit přístupové údaje a vše by mělo fungovat.
+
+
+%h3#dovecot Nastavení programu Dovecot
+:markdown
+  Dovecot má v systému dvě důležité funkce. Jednak se stará o doručování a vybírání e-mailových zpráv, tedy vykonává roli LDA a implementuje protokoly POP3 a IMAP, a jednak se pro ostatní služby stará o autentizaci uživatele, např. při odesílání zpráv pomocí protokolu SMTP (pokud tedy nechcete, aby zprávy přes server mohl posílat kdokoliv).
+
+:markdown
+  Co se týče LDA jsou v [konfiguračním souboru *dovecot.conf*](LINK) definovány výchozí složky uživatelovy schránky, povolené protokoly pro výběr pošty včetně TCP portů a systémový uživatel, který má přístupová práva ke schránkám virtuálních uživatelů. Dovecot prakticky využívá několik systémových uživatelů, především uživatele dovecot a vmail. Při instalaci balíčku na Debianu je uživatel dovecot vytvořen automaticky, ale uživatel vmail ne, takže je nutno ho vytvořit. V tutoriálech se tomuto uživateli často přiřazuje UID 5000, takže tak činím i zde.
+  ```
+  groupadd -g 5000 vmail
+  useradd -g vmail -u 5000 vmail -d /var/vmail
+  mkdir /var/vmail
+  chown vmail:vmail /var/vmail
+  ```
+
+
+:markdown
+  Autentizace se provádí na základě SQL dotazu 'password_query', který je umístěn v souboru [*dovecot-sql.conf.ext*](LINK), kde je také definováno schéma pro uložení hesla. Dovecot podporuje několik schémat; já jsem vybral SHA512-CRYPT, protože pak není náročné implementovat ukládání uživatelů v takřka jakémkoliv jazyce (viz program *Rmails_mini* dále).
+
+:markdown
+  Za zmínku ještě stojí nastavení některých pluginů v souboru [souboru *dovecot.conf*](LINK). Plugin *quota* zde má nastaveny výchozí limity velikostí schránek, které ale jdou individuálně přepsat pomocí hodnot v databázové tabulce *boxes*. V kombinaci s DSPAMem je užitečný plugin *antispam*, jenž automaticky učí DSPAM rozpoznávat spam jednoduchým přesunem zpráv do složky Spam.
+
+%h3#dspam Nastavení antispam filtru DSPAM
+:markdown
+  Zatím jedinou zbraní proti spamu v systému je program [DSPAM](http://dspam.nuclearelephant.com/). Jedná se o adaptivní filtr, což znamená, že rozpoznávat spam jej uživatel musí naučit a dále trénovat, avšak program by měl být velmi rychlý a zároveň velmi přesný.
+
+  Pro ukládání dat je doporučena databáze PostgreSQL, což se hodí do konceptu systému. Nejsnadnější nastavení je vytvořit uživatele *dspam* s přístupem k databázi *dspam* a importovat tabulky pomocí SQL skriptů, které jsou na Debianu uloženy v */usr/share/doc/libdspam7-drv-pgsql/sql/*.
+  ```
+  psql -U dspam -d dspam &gt; /usr/share/doc/libdspam7-drv-pgsql/sql/*.sql
+  ```
+  Přístupové údaje k databázi pro DSPAM jsou v souboru [pgsql.conf](LINK).
+
+:markdown
+  DSPAM v systému běží jako démon, který je vyvoláván především programem Postfix - při každém příchozím e-mailu. Po kontrole je e-mail zaslán zpět Postfixu. Původně jsem zamýšlel e-maily po kontrole rovnou předávat k doručení programu Dovecot, ale to se mi nepodařilo rozchodit. Současné nastavení využívá rozšíření Postfixu pro regulární výrazy [PCRE](http://www.postfix.org/PCRE_README.html). Regulární výraz je v uložen v souboru */etc/postfix/dspam_filter_access*.
+
+%h3#ssl Generování kryptografických klíčů
+
+%h3#telnet Testování protokolů SMTP a IMAP telnetem
+%h3#dkimspf Nastavení DKIM a SPF
+%h3#hardening Zabezpečení systému
+
+
+%h2 Závěr
+
+
+%fieldset
+  %legend Navazující článek
+  %h6 Roundcube webmail hosting zdarma na službě OpenShift
+  %em V přípravě
+  %p Pomocí tohoto návodu budete moci provozovat vlastního webmail klienta, oblíbený program Roundcube, zdarma včetně databáze na cloudové službě OpenShift.
+
+

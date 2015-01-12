@@ -1,2 +1,32 @@
-%article#aban
-  <a href="http://eshop.meriglobe.cz/produkty/cd-ebook-audiokniha/e-book?a_box=kzyg996h&a_cam=1"><img src="http://affiliate.meriglobe.cz/data/kampan/1/mg-banner-2ebook-300x600.jpg" width="300" height="600" alt="mg-banner-2ebook-300x600.jpg" /></a>
+%h1.teead
+  %a{href: 'http://tricka.trikoko.cz/', title: 'Největší databáze prodejných triček'}
+    Největší
+    %br
+    výběr
+    %br
+    triček
+#tees
+
+
+:plain
+  <script src="https://raw.githubusercontent.com/BorisMoore/jsrender/master/jsrender.min.js"></script>
+  <script id="tshirt" type="text/x-jsrender">
+    <li class="item">
+      <a href="http://tricka.trikoko.cz/t/{{>id}}" title="{{>name}}" target="_blank">
+        <img width="240" height="310" src="{{>imgurl}}" alt="{{>name}}" />
+        <i class="">{{>label}}</i>
+        <b class="price success label">{{>price}} Kč</b>
+        <p style="display:none">{{>about}}</p>
+      </a>
+    </li>
+  </script>
+
+:javascript
+  $.ajax({
+       type: "GET",
+       url: 'http://tricka.trikoko.cz/sample?take=3',
+       dataType: 'json',
+       success: function(data) {
+              $('#tees').html( $('#tshirt').render(data) );
+       }
+  });
