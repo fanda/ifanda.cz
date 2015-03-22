@@ -1,0 +1,41 @@
+---
+title: Přesměrování mezi protokoly IPv4 a IPv6
+date: 2015-03-22 18:29
+layout: article
+comments: false
+tags: [it, linux]
+geshifilter: true
+---
+
+Ještě v roce 2015 není všude samozřejmostí podpora protokolu IPv6, respektive jeho podpora je poměrně malá, ale na druhou stranu, adres IPv4 je čím dál míň, takže už často nejsou zdarma k VPS tak, jak to bývalo před několika lety. Například WEDOS zpoplatnil přiřazení IPv4 adresy k VPS na 50Kč měsíčně nebo u <a href="http://4smart.eu">4smart</a> je to 40Kč měsíčně. Ve výsledku se tedy vyplatí používat IPv6 adresy a přesměrovávat na ně přístupy z IPv4 adres pomocí proxy serverů, případně přístupovat na zařízení, která podporují jen protokol IPv6 ze sítí, které ho ještě nezavedly (například místí poskytovatel WiFi).
+
+SPLIT
+
+%h2 Přístup k IPv6 zařízení, které nemá IPv4 adresu
+
+Tento problém bude v budoucnu řešit čím dál víc lidí. Příklad z praxe: máte samostatný DB server na VPS a vedle něj u stejného poskytovatele další VPS servery, které se na něj připojují. V tomto případě používáte lokální IPv4 adresy (192.168.*.*), ale protože to Váš poskytovatel umožňuje, má server i veřejnou IPv6 adresu, díky níž se k DB serveru můžete připojit přímo ze svého počítače. Zároveň občas využíváte služby pro cloudový hosting aplikací s automatickým nasazování přes Git, např. <a href="http://heroku.com">Heroku</a> nebo <a href="https://www.openshift.com/">OpenShift</a>, které sice nabízejí nějaké DB, ale ty buď nevyhovují vašim požadavkům, nebo jsou moc drahé. Rozhodnete se cloudovou aplikaci připojit k DB serveru, ale zjistíte, že pro připojení musíte použít IPv4 adresu.
+
+Samozřejmě si jako řešení můžete pronajmout IPv4 adresu za 40-50Kč měsíčně, ale to už rovnou můžete platit za databázový server u svého cloudového hostingu. Přitom pokud už nějaký server (třeba aplikační) s veřejnou IPv4 adresou už máte, nemusíte platit za nic. Všechno, co musíte udělat, je spuštění programu <b>socat</b>, který by měl být běžně na všech serverových distribucích Linuxu i Unixu. Otevřete tím nový port, který bude všechna svá připojení přeposílat na IPv6 zařízení a to efektivně bez žádného velkého vytížení.
+
+= code 'bash' do
+  = "socat TCP4-LISTEN:3306,fork,su=nobody TCP6:[2a01:188:75d:1::2]:3306"
+
+Ve výše uvedeném příkazu upravte podle vlastní potřeby IPv6 adresu a porty. Pokud chcete, aby se příkaz spustil automaticky po startu serveru, jednoduše jej přidejte do /etc/rc.local (na Debianu) nebo pro něj <a href="http://upstart.ubuntu.com/getting-started.html">vytvořte Upstart init skript</a>.
+
+%h2 Přístup k IPv6 zařízení ze sítě bez IPv6 podpory
+
+Pokud váš poskytovatel internetového připojení nepodporuje IPv6 protokol a vy doma nebo v kanceláři nemáte IPv6 adresu a potřebujete se odtamtud připojit k IPv6 zařízení, které naopak nemá IPv4 adresu, můžete se připojit přes nějakého IPv6 tunel brokera vytvořením IPv6 tunelu.
+
+K tomu nejdříve potřebujete toho IPv6 tunel brokera. Na internetu jsou brokeři, které do určitého počtu adres, své služby poskytují zdarma. Pro výše uvedený příklad bohatě stačí jeden tunel, jímž vás plně uspokojí <a href="https://www.tunnelbroker.net/">Hurricane Electric Free IPv6 Tunnel Broker</a>. U této služby po registraci získáte možnost vytvořit zdarma až tři propojení mezi IPv4 a IPv6 adresami. V jejich systému zadáte IPv4 adresu, ze které se chcete připojovat a oni k ni přiřadí IPv6 adresu, která vás spojí se sítí IPv6 protokolu.
+
+Poté na svém počítači vytvoříte nové síťové rozhraní, díky němuž se můžete přímo připojovat ke všem veřejným IPv6 adresám. Z následujících příkazů si vytvořte jednoduchý <em>sh</em> skript, který spusťe při startu operačního systému, nebo jako root v případě potřeby.
+
+= code 'bash' do
+  = "ifconfig sit0 up"
+  = "ifconfig sit0 inet6 tunnel ::215.65.87.14"
+  = "ifconfig sit1 up"
+  = "ifconfig sit1 inet6 add 2004:481:1e1b:8f::4/64"
+  = "route -A inet6 add ::/0 dev sit1"
+
+
+Výše uvedená řešení jsou levná a efektivní propojení adresních prostorů IPv4 a IPv6, která jsou bez instalace dodatečných programů dostupná na každé linuxové/unixové distribuci.

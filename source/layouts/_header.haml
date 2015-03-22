@@ -4,7 +4,7 @@
       %a{:href => '/'} Fanda Internetu
 
   #topmenu
-    %nav.wrapper.top-bar{:data => {topbar: true, options: "is_hover: true"}}
+    %nav.wrapper.top-bar{:data => {topbar: true, options: "is_hover: true, mobile_show_parent_link: true"}}
       %section.top-bar-section
         %ul.title-area
           %li.name
@@ -33,9 +33,8 @@
             =link_to 'Odkazy', '/odkazy/'
             %ul.dropdown
               %li= link_to 'Vystavuj', 'http://vystavuj.cz'
-              %li= link_to 'Lovci snů', 'http://lovcisnu.cz'
-              %li= link_to 'Satoshi Nakamoto', 'http://satoshi.nakamoto.cz', title: 'Kryptoměny, Bitcoin, diskuze'
-              %li= link_to 'Techsquat', 'http://www.techsquat.com/'
+              %li= link_to 'Zvuk♩', 'http://zvuki.cz', title: 'Jukebox z Youtube videí'
+              %li= link_to 'Všechna trička', 'http://tricka.trikoko.cz'
           %li.divider
           %li
             =link_to 'Ostatní', '/ostatní/'

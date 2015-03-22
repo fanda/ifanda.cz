@@ -5,6 +5,7 @@ layout: article
 comments: false
 tags: [it, linux]
 geshifilter: true
+draft: true
 ---
 :plain
   Po několika letech jsem byl znovu vystaven útrapám s nastavováním e-mailového serveru na Linuxu. Ne, že by se jednalo o nějak vyjímečně složitou záležitost, ale triviální problém to také není, a proto bych svůj postup chtěl zapsat - pro sebe i pro ostatní, kteří někdy někde budou muset nastavovat programy Postfix a Dovecot v součinosti s databází PostgreSQL.
@@ -17,14 +18,14 @@ SPLIT
   V minulosti jsem se pokusil celý [instalační proces](http://github.com/fanda/rmails) automatizovat, ale výsledná aplikace se nedá považovat za úspěch. Jedná se o Ruby on Rails aplikaci, která pomocí knihovny pro manipulaci s operačním systémem, spravuje nastavení, uživatele a přesměrování e-mailového serveru. Aplikace by teoreticky měla fungovat na většině linuxových distribucí, ale ty se často mění, takže vyladit a udržovat funkční instalační rutiny zabírá hodně času. Rozhodl jsem se vývoj na projektu zastavit a vyjma architektury serveru jsem jej při práci nepoužil.
 
 %p
-  Avšak i architekturu jsem malinko změnil. Původní je popsána [zde](http://programator.pro/pages/rmails/#cooperation). Ta nová vypadá zhruba takto:
+  Avšak i architekturu jsem malinko změnil. Původní je popsána v mé diplomové práci s názvem <a href="http://programator.pro/pages/rmails/#cooperation">Řešení e-mailového serveru a aplikace pro jeho správu</a>. Nová architektura by se nákresem dala vyjádřit asi takto:
   %pre
     :plain
-      --smtp--> [ Postfix ] --smtp--> [DSPAM] --smtp--> [ Postfix ] --lda--> [DOVECOT] ---> (virtual Mailbox)
-             |
+      -smtp--> [Postfix] -smtp--> [DSPAM] -smtp--> [Postfix] -lda--> [DOVECOT](Mailbox)
+            |
            DKIM
 
-  Rozdíl spočívá v odstranění Amawis a Spamassasin; zůstává jen Dspam, který reinjektuje Postfix, a také se změnilo databázové schéma, jelikož server má být součástí většího systému, kde by mělo fungovat jediné přihlášení napříč všemy systémy, což popíšu dále v textu.
+%p Jedná se tedy o mnohem jednodušší architekturu. Rozdíl spočívá v odstranění Amawis a Spamassasin; zůstává jen Dspam, který reinjektuje Postfix. Změnilo se také databázové schéma, jelikož server má být součástí většího systému, kde by mělo fungovat jediné přihlášení napříč všemy systémy, což popíšu dále v textu.
 
 %h2 Postup nastavení e-mailového serveru
 
@@ -49,25 +50,26 @@ SPLIT
 :plain
   Debian je jedna z nejrozšířenějších linových distribucí na serverech a v repozitářích má velké množství balíčků, které ovšem ve stabilním vydání nemusí být nejaktuálnější. Naštěstí všechny programy, které e-mailový server podle návrhu vyžaduje jsou v repozitářích přítomny, přestože některé (Dovecot > 2.0) v jsou jen v tzv. backports repozitářích.
 :markdown
-  [Přidání backports repozitářů](http://backports.debian.org/Instructions/) na Debian Wheezy je jednoduché:
-  1. přidáme do */etc/apt/sources.list* řádek
-  ```
-  deb http://http.debian.net/debian wheezy-backports main
-  ```
-  2. spustíme jako root příkaz: *apt-get update*.
+  [Přidání backports repozitářů](http://backports.debian.org/Instructions/) na Debian Wheezy je jednoduché:<br/>
+- code('bash') do
+  :preserve
+    echo "deb http://http.debian.net/debian wheezy-backports main" >> /etc/apt/sources.list
+  :preserve
+    apt-get update
 :markdown
   Zde ještě poznámka ohledně databáze. Pokud chcete, aby Postgre databáze byla na stejném stroji jako zbytek systému, doporučuju Vám nainstalovat nejnovější verzi, která ovšem není obsažena v repozitářích Debianu a opět musíte upravit */etc/apt/sources.list*, abyste ji mohli nainstalovat ([podrobnosti v angličtině](https://wiki.postgresql.org/wiki/Apt)). Já reálně používám dedikovaný databázový server, takže jsem instaloval jen PostgreSQL klienta.
 :markdown
   Nyní lze instalovat programy. Pro instalaci Postfix, Dspam a OpenDKIM jako superuživatel spusťte:
-  ```
-  apt-get install build-essential postfix postfix-pgsql postfix-pcre dspam libdspam7-drv-pgsql opendkim
-  ```
+- code('bash') do
+  :preserve
+    apt-get install build-essential postfix postfix-pgsql postfix-pcre
+  :preserve
+    apt-get install dspam libdspam7-drv-pgsql opendkim
   a následně také nainstalujte Dovecot, ovšem z backports:
-  ```
-  apt-get -t wheezy-backports install dovecot dovecot-dev dovecot-antispam dovecot-lmtpd dovecot-pgsql
-  ```
-
-:plain
+- code('bash') do
+  :preserve
+    apt-get -t wheezy-backports install dovecot dovecot-dev dovecot-antispam dovecot-lmtpd dovecot-pgsql
+%p
   Protože správce balíčků Apt automaticky instaluje závislé balíčky, měly by nyní být všechny komponenty připraveny pro konfiguraci.
 
 

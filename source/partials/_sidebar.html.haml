@@ -1,3 +1,36 @@
+%h1.teead
+  %a{href: 'http://tricka.trikoko.cz/', title: 'Největší databáze prodejných triček'}
+    Největší
+    %br
+    výběr
+    %br
+    triček
+%ul#tees
+
+:plain
+  <script src="https://raw.githubusercontent.com/BorisMoore/jsrender/master/jsrender.min.js"></script>
+  <script id="tshirt" type="text/x-jsrender">
+    <li class="item">
+      <a href="http://tricka.trikoko.cz/t/{{>id}}" title="{{>name}}" target="_blank">
+        <img width="240" height="310" src="{{>imgurl}}" alt="{{>name}}" />
+        <i class="">{{>label}}</i>
+        <b class="price success label">{{>price}} Kč</b>
+        <p style="display:none">{{>about}}</p>
+      </a>
+    </li>
+  </script>
+
+:javascript
+  $.ajax({
+       type: "GET",
+       url: 'http://tricka.trikoko.cz/sample?take=10',
+       dataType: 'json',
+       success: function(data) {
+              $('#tees').html( $('#tshirt').render(data) );
+       }
+  });
+
+
 #microblog
   %article
     %h3

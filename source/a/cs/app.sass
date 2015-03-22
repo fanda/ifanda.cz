@@ -36,9 +36,15 @@ $main_blue: #336699
   a
     color: #008CBA
     font-size: 2.9rem
+.highlight
+  background: #f9f9f9
+  padding: 1px
+  margin: 4px 2px
+
 
 body
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
+  line-height: 1.5em
+
 
 a, .color-red, #sitename a:hover
   color: $main_red
@@ -112,8 +118,10 @@ article
       &:hover
         text-decoration: underline
   h2
-    font-size: 1.74rem
+    font-size: 1.66rem
+    margin-top: 1.66rem
   h3
+    margin-top: 1.38rem
     font-size: 1.38rem
   h4
     font-size: 1.29em
@@ -129,6 +137,14 @@ article
         text-decoration: none
   footer
     clear: both
+  blockquote
+    background: $main_red
+    color: #fff
+    font-weight: bold
+    font-size: 1rem
+    padding: 0.6rem
+    margin: 0.5rem
+
 
 article.inlist
   header
@@ -137,6 +153,7 @@ article.inlist
   .summary
     max-height: 392px
     overflow-y: auto
+    margin-bottom: 1rem
 
 .list-articles
   list-style: none
@@ -207,3 +224,41 @@ ul#webz
     color: #fff
     line-height: 110%
 
+#kaomojis
+  text-align: center
+  a
+    display: inline-block
+    font-size: 121%
+    padding: 19px
+    text-align: center
+    &:hover
+      border: 1px solid $main_red
+      padding: 18px
+      color: $main_red
+    &.active
+      color: $main_red
+      border-color: $main_red
+    &.thing
+      color: #4b0082
+      border-color: #4b0082
+    &.mood
+      color: #daa520
+      border-color: #daa520
+    &.animal
+      color: #228b22
+      border-color: #228b22
+    &.action
+      color: #00ced1
+      border-color: #00ced1
+    &.other
+      color: $brit_red
+      border-color: $brit_red
+.kaomoji
+  display: none
+  table
+    width: 100%
+    td
+      padding: 19px
+      text-align: center
+      width: 33%
+      font-size: 144%
