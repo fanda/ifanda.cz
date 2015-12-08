@@ -136,3 +136,6 @@ DEPENDENCIES
   redcarpet
   therubyracer
   thin
+
+BUNDLED WITH
+   1.10.4

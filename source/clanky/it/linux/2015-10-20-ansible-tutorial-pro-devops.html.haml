@@ -1,0 +1,77 @@
+---
+title: Ansible tutorial pro Debian
+date: 2015-10-20 13:25
+layout: article
+comments: false
+tags: [it, linux]
+geshifilter: true
+published: false
+---
+
+%h2 Instalace
+
+:markdown
+  Požadované programy: python2 (s verzí 3 nejspíše nic nebude fungovat), pypi.
+
+= code 'bash' do
+  = "pip install   ansible  configparser  netaddr  debops"
+
+:markdown
+  Pro stažení všech *playbooks* z nabídky DebOps je po instalaci nutné spustit
+
+= code 'bash' do
+  = "debops-update"
+
+%h2 Vytvoření projektu
+
+:markdown
+  Zatímco Ansible načítá konfiguraci stanic v /etc/ansible, a tudíž globálně (což jistě jde přenastavit), DebOps vytvoří strukturu souborů pro každý projekt zvlášť. Nový projekt se začíná příkazem *debops-init*.
+
+= code 'bash' do
+  = "debops-init ./projekt"
+
+:markdown
+  Následně se všechny příkazy vztažené k *projekt* spouští složce './projekt'. V ní je složka 'ansible', kde je konfigurace stanic, a soubor .debops.cfg s nastavením nástroje DebOps pro tento konkrétní projekt.
+
+  Důležitým souborem je 'ansible/inventory/hosts' s nastavením skupin serverů. Soubor je ve formátu .ini.
+
+= code do
+  = '[db_servery]'
+  = 'server1'
+  = 'server2'
+  = '[proxy_servery]'
+  = 'proxy_server_1'
+
+
+:markdown
+  Spuštění Ansible, tj. připojení k serverům a provedení změn, se provede příkazem ```debops```, který obaluje příkaz ```ansible-playbook```, takže všechny parametry pro *ansible-playbook* jsou platné i pro *debops*.
+
+= code 'bash' do
+  = "debops"
+
+%h2 Konfigurace
+
+:markdown
+  Konfigurační soubory pro DebOps můžou být na různých místech - úrovních. Nastavení pro celý operační systém je v '/etc/debops', ale může být přepsáno v '~/.debops.cfg' pro všechno, co se týče uživatele, nebo v './debops.cfg' ve složce konkrétního projektu. Jedná se o soubor ve formátu .ini. Zde lze nastavit cesty k významným souborům a složkám, nebo nastavit samotné Ansible, které se nastavuje stejným způsobem.
+
+Příklad nastavení cesty:
+= code do
+  = '[paths]'
+  = ';data-home: /opt/debops'
+
+Příklad nastavení libovolné hodnoty aplikovatelné v Ansible
+= code do
+  = '[ansible defaults]'
+  = 'ansible_klic = Libovolná Hodnota'
+
+
+
+
+%h2 (Playbooks)
+
+:markdown
+  *Playbooks* slouží určení "rolí", které plní jednotlivé servery. DebOps nabízí několik *playbooks*, které lze jednoduše použít. Z [repozitáře s přehledným výpisem dostupných *playbooks*](https://github.com/debops/debops-playbooks) je po instalaci stáhl příkaz *debops-update*.
+
+
+
+https://serversforhackers.com/an-ansible-tutorial
